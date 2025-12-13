@@ -2,6 +2,9 @@
  * main.js
  */
 
+// 如果 LOCAL_IMAGES 未定义，防止报错
+const IMAGES = (typeof LOCAL_IMAGES !== 'undefined') ? LOCAL_IMAGES : {};
+
 /** Class 1: ParticleBackground (WebGL 星空) */
 class ParticleBackground {
     constructor(containerId) {
@@ -117,20 +120,26 @@ class HelixViewer {
 
     createHelix() {
         const helixGroup = new THREE.Group();
-        // 适配移动端：如果是小屏，螺旋半径稍微减小，防止太散
-        const isMobile = window.innerWidth < 768;
-        const radius = isMobile ? 450 : 600; 
-        const yStep = 30; const totalY = this.data.length * yStep;
-        
+            
+            // 2. 动态计算半径
+            let radius = Math.max(400, Math.min(window.innerWidth * 0.6, 800));
+
+            // 如果是极窄的手机屏幕（如折叠屏外屏），稍微再缩小一点
+            if (window.innerWidth < 400) radius = 350;
+
+            const yStep = 30; 
+            const totalY = this.data.length * yStep;
+
         this.data.forEach((item, i) => {
             const element = document.createElement('div');
-            // CSS 类名控制尺寸，已在 CSS 中适配 4:3
             element.className = item.isHero ? 'card-element hero' : 'card-element';
-            const imgSrc = `images/${item.en_name}.webp`;
             
+            // 从全局变量 IMAGES 中获取 Base64 数据
+            const imgBase64 = IMAGES[item.en_name] || ''; 
+
             element.innerHTML = `
                 <div class="card-content">
-                    <img src="${imgSrc}" class="card-img" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='#222'">
+                    <img src="${imgBase64}" class="card-img" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='#222'">
                     <div class="card-info">
                         <span class="card-cn">${item.cn_name}</span>
                         <span class="card-en">${item.en_name}</span>
@@ -138,20 +147,28 @@ class HelixViewer {
                 </div>
             `;
             
-            // 移动端增加 touchstart 模拟点击，提升响应速度
             element.addEventListener('click', () => { if(this.onCardClick) this.onCardClick(item); });
-            element.addEventListener('touchstart', () => { /* 空监听器，激活 iOS :active 态 */ }, {passive: true});
+            element.addEventListener('touchstart', () => { }, {passive: true});
 
-            const object = new THREE.CSS3DObject(element);
-            const theta = i * 0.25; const y = -(totalY / 2) + i * yStep; const offset = (i % 2) * Math.PI;
-            object.position.setFromCylindricalCoords(radius, theta + offset, y);
-            const vector = new THREE.Vector3(0, object.position.y, 0);
-            object.lookAt(vector);
-            helixGroup.add(object);
-            this.objects.push(object);
-        });
-        this.scene.add(helixGroup);
-    }
+        const object = new THREE.CSS3DObject(element);
+                
+                // 3. 调整旋转角度 theta 的密度
+                // 如果半径变大了，为了保持视觉上的紧凑感，可以稍微减小每个卡片的旋转间隔
+                // 基础间隔 0.25，半径越大，间隔越小 (反比关系)
+                const thetaDensity = 0.25 * (600 / radius); 
+                
+                const theta = i * thetaDensity; 
+                const y = -(totalY / 2) + i * yStep; 
+                const offset = (i % 2) * Math.PI; // 保持双螺旋结构
+                
+                object.position.setFromCylindricalCoords(radius, theta + offset, y);
+                const vector = new THREE.Vector3(0, object.position.y, 0);
+                object.lookAt(vector);
+                helixGroup.add(object);
+                this.objects.push(object);
+            });
+            this.scene.add(helixGroup);
+        }
 
     // 动画序列
     playIntroSequence() {
@@ -770,9 +787,26 @@ class AppManager {
     }
 
     init3DScene() {
+        // 1. 动态计算卡片数量
+        // 逻辑：基础数量 30 + 每 25px 屏幕高度增加 1 张卡片
+        // 限制：最少 35 张，最多 80 张（防止性能问题）
+        const densityFactor = 25; 
+        let dynamicCount = 30 + Math.floor(window.innerHeight / densityFactor);
+        dynamicCount = Math.min(Math.max(dynamicCount, 35), 80);
+
+        // console.log(`屏幕高度: ${window.innerHeight}, 计算出的卡片数量: ${dynamicCount}`);
+
         const flatData = this.rawData.families.map(fam => ({
-            cn_name: fam.family_cn, en_name: fam.family_en, desc: fam.description, taxonomy: fam.taxonomy, rank: "Family (科)", isHero: Math.random() < 0.2
-        })).sort(() => Math.random() - 0.5).slice(0, 40);
+            cn_name: fam.family_cn, 
+            en_name: fam.family_en, 
+            desc: fam.description, 
+            taxonomy: fam.taxonomy, 
+            rank: "Family (科)", 
+            isHero: Math.random() < 0.2
+        }))
+        .sort(() => Math.random() - 0.5)
+        .slice(0, dynamicCount); // <--- 使用动态计算的数量
+
         this.helixApp = new HelixViewer('container-3d', flatData, (data) => this.showModal(data));
     }
 
@@ -813,13 +847,23 @@ class AppManager {
         els.desc.innerText = data.desc || data.description || "暂无详细资料...";
         els.tags.innerHTML = "";
         if (data.taxonomy) { Object.entries(data.taxonomy).forEach(([rank, name]) => { els.tags.innerHTML += `<span class="info-tag">${rank}: ${name}</span>`; }); }
+        
         const familyEn = data.family_en || data.en_name;
-        if (familyEn) {
-            els.img.style.display = "block"; els.img.src = `images/${familyEn}.webp`;
+        
+        // 从全局变量 IMAGES 中获取 Base64 数据
+        const imgBase64 = IMAGES[familyEn];
+
+        if (imgBase64) {
+            els.img.style.display = "block"; 
+            els.img.src = imgBase64; // 直接赋值 Base64
             els.img.onerror = () => { els.img.style.display = 'none'; };
-        } else { els.img.style.display = "none"; }
+        } else { 
+            els.img.style.display = "none"; 
+        }
+        
         this.ui.modal.style.display = 'flex';
     }
+
     closeModal(modalElement) { modalElement.style.display = 'none'; }
 }
 
