@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>最后的合弓纲 - 哺乳纲演化</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS3DRenderer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    
+    <script src="data.js"></script>
+
+    <style>
+        :root {
+            --accent-color: #c5a059;
+            --text-main: #fff;
+            --card-bg: rgba(20, 24, 28, 0.85);
+            --bg-color: #f4f1ea;
+            --text-color: #2c241b;
+            --line-color: #5d4037;
+        }
+
+        body {
+            margin: 0; overflow: hidden; background-color: #050505;
+            font-family: 'Noto Serif SC', serif; color: var(--text-main);
+            transition: background-color 1s ease-in-out, color 1s ease-in-out;
+            -webkit-tap-highlight-color: transparent; /* 移动端去除点击高亮 */
+        }
+
+        /* Loading */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999; display: flex;
+            justify-content: center; align-items: center; color: var(--accent-color);
+            transition: opacity 0.5s; pointer-events: none;
+        }
+
+        /* 转场遮罩 */
+        #transition-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at center, #fffef5 0%, #f4f1ea 100%);
+            z-index: 500; opacity: 0; pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        /* 纸质纹理 */
+        #paper-texture {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 3; display: none;
+            background-image: none; /* 由 JS 生成 */
+            background-repeat: repeat; 
+            opacity: 0.08; 
+            mix-blend-mode: multiply;
+        }
+
+        /* UI 层 */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            transition: opacity 1s;
+            padding: 20px; box-sizing: border-box;
+        }
+        h1 {
+            color: var(--accent-color); font-size: 4rem; margin: 0 0 20px 0;
+            text-shadow: 0 0 20px rgba(197, 160, 89, 0.3); letter-spacing: 5px;
+            pointer-events: auto; text-align: center;
+            line-height: 1.1;
+        }
+        .subtitle {
+            color: #888; font-size: 1.2rem; margin-bottom: 40px; letter-spacing: 2px;
+            text-align: center;
+        }
+        #enter-btn {
+            pointer-events: auto; background: transparent;
+            color: var(--accent-color); border: 1px solid var(--accent-color);
+            padding: 15px 40px; font-size: 1.2rem; cursor: pointer;
+            transition: all 0.3s; font-family: 'Noto Serif SC', serif;
+            text-transform: uppercase; letter-spacing: 3px;
+        }
+        #enter-btn:hover {
+            background: var(--accent-color); color: #000;
+            box-shadow: 0 0 30px rgba(197, 160, 89, 0.5);
+        }
+
+        /* 容器 */
+        #container-particles { z-index: 0; position: absolute; top:0; left:0; width:100vw; height:100vh; }
+        #container-3d { z-index: 1; position: absolute; top:0; left:0; width:100vw; height:100vh; }
+        #container-viz { display: none; cursor: grab; z-index: 2; position: absolute; top:0; left:0; width:100vw; height:100vh; }
+        #container-viz:active { cursor: grabbing; }
+
+        /* --- CSS3D 卡片优化 (适配 4:3 图像) --- */
+        .card-element {
+            /* 宽度增加，高度适配内容 */
+            width: 240px; height: 300px; 
+            background: transparent;
+            cursor: pointer; backface-visibility: hidden;
+        }
+        
+        .card-content {
+            width: 100%; height: 100%;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; flex-direction: column; align-items: center;
+            padding: 12px; box-sizing: border-box;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s, box-shadow 0.3s;
+        }
+
+        #container-3d.interactive .card-element:hover .card-content {
+            transform: scale(1.15) translateZ(20px);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 35px rgba(197, 160, 89, 0.6);
+            z-index: 1000;
+        }
+
+        .card-img {
+            width: 100%; 
+            /* 240px 宽 - 24px padding = 216px 内容宽. 
+               4:3 比例 -> 216 * 0.75 = 162px 高. 
+               这里取整方便计算 */
+            height: 162px; 
+            object-fit: cover;
+            background: #1a1a2e; margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .card-info { text-align: center; width: 100%; }
+        .card-cn { font-size: 1.1rem; font-weight: bold; display: block; margin-bottom: 5px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-en { color: #666; font-size: 0.8rem; font-style: italic; font-family: 'Playfair Display', serif; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .card-element.hero { width: 320px; height: 400px; }
+        .card-element.hero .card-content { border: 1px solid var(--accent-color); }
+        .card-element.hero .card-img { height: 222px; /* 320-24=296, 296*0.75=222 */ }
+        .card-element.hero .card-cn { font-size: 1.5rem; }
+
+        /* --- 顶部控制栏 --- */
+        #top-controls {
+            position: fixed; top: 20px; right: 20px; z-index: 300;
+            display: flex; align-items: center; gap: 10px;
+            display: none;
+            flex-wrap: wrap; justify-content: flex-end;
+        }
+
+        /* 搜索框 */
+        #search-container { position: relative; }
+        #search-input {
+            width: 240px; padding: 10px 15px;
+            border: 1px solid rgba(93, 64, 55, 0.3);
+            border-radius: 6px; font-size: 14px;
+            font-family: 'Noto Serif SC', serif;
+            background: rgba(255, 255, 255, 0.95);
+            outline: none; transition: all 0.3s;
+        }
+        #search-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
+        }
+        #search-results {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: rgba(255,255,255,0.98); border-radius: 8px;
+            margin-top: 6px; max-height: 300px; overflow-y: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none;
+        }
+        .search-result-item {
+            padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        .search-result-item:hover { background: #f5f5f5; }
+        .result-cn { font-weight: bold; color: #2c241b; display: block;}
+        .result-en { font-size: 12px; color: #888; font-style: italic; }
+
+        /* 树控制按钮 */
+        .tree-btn {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(93, 64, 55, 0.3);
+            color: var(--line-color);
+            width: 40px; height: 40px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 20px; font-weight: bold;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            flex-shrink: 0; /* 防止被压缩 */
+        }
+        .tree-btn:hover {
+            background: var(--accent-color);
+            color: #fff; border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(197, 160, 89, 0.3);
+        }
+        .tree-btn:active { transform: translateY(0); }
+        
+        /* 信息按钮图标微调 */
+        .tree-btn.info-icon { font-family: serif; font-style: italic; font-size: 22px; }
+
+        /* 时间标尺 */
+        #time-axis {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+            background: linear-gradient(to top, rgba(244,241,234,0.98) 0%, rgba(244,241,234,0.9) 70%, transparent 100%);
+            z-index: 200; display: none; align-items: flex-end;
+            padding: 0; border-top: 1px solid rgba(93, 64, 55, 0.2);
+            pointer-events: none; transition: opacity 1s;
+        }
+        #axis-svg { width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+        
+        #time-indicator {
+            position: absolute; top: 10px; background: var(--accent-color);
+            color: #fff; padding: 4px 10px; border-radius: 4px;
+            font-size: 12px; font-weight: bold; pointer-events: none;
+            transform: translateX(-50%); white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none; z-index: 201;
+        }
+
+        /* 模态框 (通用) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); display: none;
+            justify-content: center; align-items: center; z-index: 2000;
+            backdrop-filter: blur(4px);
+            padding: 20px; box-sizing: border-box;
+        }
+        .modal-card {
+            background: #fff; width: 600px; max-width: 100%; max-height: 90vh;
+            overflow-y: auto; border: 1px solid #dcd6cc; border-radius: 6px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative;
+            animation: slideUp 0.3s ease-out;
+            display: flex; flex-direction: column;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-close { position: absolute; right: 15px; top: 10px; cursor: pointer; font-size: 28px; color: #888; z-index: 10; padding: 5px; line-height: 1; }
+        .modal-close:hover { color: #000; }
+
+        /* 资料卡片内容 */
+        .specimen-img { 
+            width: 100%; 
+            /* 强制 4:3 比例 */
+            aspect-ratio: 4/3; 
+            object-fit: cover; 
+            display: block; 
+            border-bottom: 1px solid #eee; 
+            background: #e8e4dc; 
+        }
+        .specimen-info { padding: 30px; }
+        .specimen-title { font-family: 'Playfair Display', serif; font-size: 2rem; margin: 0 0 5px 0; color: #2c241b; line-height: 1.2; }
+        .specimen-latin { font-style: italic; color: #666; font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 20px; display: block; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .info-tag { display: inline-block; background: #e8e4dc; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; margin-right: 5px; color: #5d4037; margin-bottom: 15px; }
+        .specimen-desc { line-height: 1.8; font-size: 1rem; color: #444; margin-top: 10px; text-align: justify; }
+
+        /* 关于/日志 模态框内容 */
+        .about-content { padding: 40px; }
+        .about-content h2 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .about-content h3 { margin-top: 25px; margin-bottom: 10px; color: #2c241b; }
+        .about-content ul { padding-left: 20px; color: #555; line-height: 1.6; }
+        .about-content li { margin-bottom: 8px; }
+        .about-footer { margin-top: 40px; font-size: 0.9rem; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+
+        /* D3 样式 */
+        .link { fill: none; stroke: var(--line-color); stroke-width: 1.5px; stroke-linecap: round; }
+        .node circle { fill: var(--text-color); stroke: #fff; stroke-width: 2px; transition: all 0.3s; }
+        .node circle.collapsed { fill: #fff; stroke: var(--text-color); stroke-width: 3px; }
+        .node:hover circle { r: 8 !important; fill: #c5a059; }
+        
+        .node.highlighted circle { 
+            r: 12 !important; fill: #c5a059 !important; 
+            stroke: #fff; stroke-width: 4px;
+            filter: drop-shadow(0 0 8px rgba(197, 160, 89, 0.8));
+        }
+
+        .node text {
+            font-size: 12px;
+            font-family: 'Noto Serif SC', serif;
+            fill: var(--text-color);
+            cursor: pointer;
+            paint-order: stroke fill; 
+            stroke: #f4f1ea; 
+            stroke-width: 4px; 
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 1px 0 rgba(255,255,255,0.5));
+            transition: all 0.3s;
+        }
+
+        .node.highlighted text {
+            font-weight: bold;
+            font-size: 16px !important;
+            fill: #c5a059 !important;
+            stroke: #f4f1ea !important; 
+            stroke-width: 5px;
+        }
+        
+        .epoch-band { fill-opacity: 0.25; shape-rendering: crispEdges; }
+        .epoch-label { 
+            font-family: 'Playfair Display', serif; fill: rgba(0,0,0,0.08); font-weight: 900; 
+            pointer-events: none; user-select: none; writing-mode: vertical-rl; 
+            text-orientation: upright; letter-spacing: 15px; font-size: 40px; 
+            text-anchor: middle; dominant-baseline: middle;
+        }
+
+        /* --- 彩蛋相关样式 --- */
+        .node.ghost circle { fill: #333 !important; stroke: #555 !important; opacity: 0.6; }
+        .node.ghost text { fill: #666 !important; font-style: italic; font-size: 10px !important; }
+        .link.ghost { stroke: #444 !important; stroke-width: 1px !important; stroke-dasharray: 4, 4; opacity: 0.4; }
+        .link.ghost.survivor-line { stroke: var(--accent-color) !important; stroke-dasharray: none; opacity: 0.8; stroke-width: 2px !important; }
+
+        #easter-egg-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 800;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 2s;
+            text-align: center;
+            background: radial-gradient(circle, transparent 0%, rgba(0,0,0,0.8) 100%);
+            padding: 20px;
+        }
+        
+        #easter-egg-overlay.interactive { pointer-events: auto; cursor: pointer; }
+
+        .ee-text-main {
+            font-family: 'Noto Serif SC', serif; font-size: 2.5rem; color: #fff;
+            text-shadow: 0 0 20px rgba(197, 160, 89, 0.6);
+            margin-bottom: 20px; transform: translateY(20px);
+            transition: transform 2s ease-out, opacity 1s;
+        }
+
+        /* 按钮样式 */
+        #origin-btn {
+            position: fixed; top: 20px; left: 20px; z-index: 300;
+            background: transparent; border: 1px solid rgba(93, 64, 55, 0.3);
+            color: var(--line-color); padding: 8px 16px; border-radius: 4px;
+            cursor: pointer; font-family: 'Noto Serif SC', serif;
+            font-size: 12px; transition: all 0.3s;
+            display: none; 
+            background: rgba(255,255,255,0.8);
+        }
+        #origin-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+
+        /* 退出按钮 */
+        #exit-egg-btn {
+            position: fixed; bottom: 40px; right: 40px; z-index: 900;
+            background: rgba(0, 0, 0, 0.4); 
+            border: 1px solid rgba(197, 160, 89, 0.6); 
+            color: #c5a059; 
+            padding: 12px 30px; border-radius: 4px; 
+            cursor: pointer; font-family: 'Noto Serif SC', serif;
+            font-size: 16px; font-weight: bold; letter-spacing: 3px;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            opacity: 0; pointer-events: none;
+            box-shadow: 0 0 15px rgba(197, 160, 89, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        #exit-egg-btn:hover {
+            background: var(--accent-color); color: #000; border-color: var(--accent-color);
+            box-shadow: 0 0 30px rgba(197, 160, 89, 0.8), 0 0 10px rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px) scale(1.05);
+        }
+        #exit-egg-btn.visible { opacity: 1; pointer-events: auto; }
+
+        /* --- 移动端适配 Media Queries --- */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; letter-spacing: 2px; }
+            .subtitle { font-size: 1rem; margin-bottom: 30px; }
+            
+            #top-controls { 
+                top: 10px; right: 10px; left: 10px; 
+                justify-content: space-between; 
+            }
+            #search-container { order: 2; width: 100%; margin-top: 10px; }
+            #search-input { width: 100%; box-sizing: border-box; }
+            .tree-btn { width: 36px; height: 36px; font-size: 18px; }
+            
+            #origin-btn { top: auto; bottom: 80px; left: 10px; font-size: 11px; padding: 6px 12px; }
+            
+            .modal-card { width: 95%; max-height: 85vh; }
+            .specimen-info { padding: 20px; }
+            .specimen-title { font-size: 1.5rem; }
+            
+            .ee-text-main { font-size: 1.5rem; padding: 0 15px; }
+            #exit-egg-btn { bottom: 30px; right: 50%; transform: translateX(50%); width: 200px; text-align: center; }
+            #exit-egg-btn:hover { transform: translateX(50%) scale(1.05); }
+        }
+                
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">资源加载中...</div>
+    <div id="transition-overlay"></div>
+    <div id="paper-texture"></div>
+
+    <div id="ui-layer">
+        <h1>MAMMALIA</h1>
+        <p class="subtitle">哺乳纲演化时间树 · 沉浸式导览</p>
+        <button id="enter-btn">探索演化树</button>
+    </div>
+
+    <div id="container-particles"></div>
+    <div id="container-3d"></div>
+
+    <div id="container-viz"></div>
+    
+    <div id="top-controls">
+        <button id="btn-collapse-all" class="tree-btn" title="逐级收起">-</button>
+        <button id="btn-expand-all" class="tree-btn" title="逐级展开">+</button>
+        <button id="btn-info" class="tree-btn info-icon" title="说明与日志">i</button>
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="搜索科名（中文/拉丁名）...">
+            <div id="search-results"></div>
+        </div>
+    </div>
+    
+    <div id="time-axis">
+        <div id="time-indicator">0 MYA</div>
+        <svg id="axis-svg"></svg>
+    </div>
+
+    <!-- 资料详情模态框 -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="modal-close">&times;</span>
+            <div class="modal-body">
+                <img id="modal-img" src="" alt="" class="specimen-img">
+                <div class="specimen-info">
+                    <h2 id="modal-cn" class="specimen-title"></h2>
+                    <span id="modal-en" class="specimen-latin"></span>
+                    <div id="modal-tags"></div>
+                    <p id="modal-desc" class="specimen-desc"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关于/日志模态框 -->
+    <div id="info-modal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="modal-close" id="info-close">&times;</span>
+            <div class="about-content">
+                <h2>关于本项目</h2>
+                <p>这是一个交互式哺乳纲演化可视化项目，旨在以沉浸式的方式展示从合弓纲到现代哺乳动物壮丽的演化历程。</p>
+                
+                <h3>数据与技术说明</h3>
+                <ul>
+                    <li><strong>数据基准</strong>：分类系统与演化关系主要参考最新的 <strong>Mammal Diversity Database (MDD) v2.3</strong>。</li>
+                    <li><strong>时间标尺</strong>：演化树节点时间主要标记为<strong>冠群 (Crown Group)</strong> 的分化时间。</li>
+                    <li><strong>图像生成</strong>：本项目囊括了近现代哺乳纲 <strong>167个科</strong> 的代表物种画像，均由 <strong>nanobanana</strong> 模型生成。受限于开发者的专业背景，难以完全甄别 AI 在特定物种形态特征上的细微谬误，若发现配图有误，恳请不吝指正。</li><li><strong>技术架构</strong>：本项目基于 D3.js (2D) 与 Three.js (3D) 混合开发。</li>
+                </ul>
+
+                <h3>操作指南</h3>
+                <ul>
+                    <li><strong>拖拽画布</strong>：自由移动演化树视图</li>
+                    <li><strong>滚轮/双指</strong>：缩放查看演化细节</li>
+                    <li><strong>点击节点</strong>：展开或收起演化分支</li>
+                    <li><strong>点击文字</strong>：查看物种/科目的详细资料卡片</li>
+                </ul>
+
+                <h3>致谢与联系</h3>
+                <p>本项目在开发过程中特别感谢 <strong>Google Gemini</strong> 提供的代码协助与技术支持。</p>
+                <p>这不仅是一个科普项目，也是一次对生命演化史的致敬。受限于个人知识水平，项目中可能存在数据错误或Bug，您的每一个反馈都是项目进步的动力。</p>
+                
+                <ul style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 15px;">
+                    <li><strong>当前版本</strong>：v1.0 (Initial Release)</li>
+                    <li><strong>反馈邮箱</strong>：<a href="mailto:shuowang1998@163.com" style="color: var(--accent-color); text-decoration: none;">shuowang1998@163.com</a></li>
+                </ul>
+                
+                <div class="about-footer">
+                    Designed & Developed by Sean Wong<br>
+                    Data Source: Paleobiology Database & MDD v2.3
+                </div>
+            </div>
+        </div>
+    </div>
+    <button id="origin-btn">溯源：最后的合弓纲</button>
+    <button id="exit-egg-btn">返回现代哺乳纲</button>
+
+    <div id="easter-egg-overlay">
+        <div class="ee-text-main">“我们是合弓纲在这颗星球上，最后的孑遗。”</div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
