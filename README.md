@@ -102,17 +102,9 @@
 
 ## ⚠️ 版权与许可 (License)
 
-本项目采用 **CC BY-NC-SA 4.0** 协议进行许可。
+本作品采用 [知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议](http://creativecommons.org/licenses/by-nc-sa/4.0/) 进行许可。
 
-**Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International**
+[![CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-✅ **允许**：
-- **分享** — 在任何媒介以任何形式复制、发行本作品。
-- **演绎** — 修改、转换或以本作品为基础进行创作。
-
-❌ **禁止**：
-- **商业性使用** — **严禁**将本项目源码、设计或生成的图像用于任何商业用途（包括但不限于付费展示、商业网站引流、广告植入等）。
-
-🔄 **相同方式共享**：
-- 如果您修改本作品，必须在相同的许可协议下发布。
+This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
 
