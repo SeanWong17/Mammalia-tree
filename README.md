@@ -83,7 +83,8 @@
     ```
     然后在浏览器访问 `http://localhost:8000`。
 
-或者访问在线演示：[Live Demo](https://mammalia-tree.pages.dev/)
+    或者访问在线演示：[Live Demo](https://mammalia-tree.pages.dev/)
+    备用地址：[Live Demo2](https://seanwong17.github.io/Mammalia-tree/)
 
 ## 📂 数据与素材说明 (Credits)
 
