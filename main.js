@@ -174,7 +174,7 @@ class HelixViewer {
     playIntroSequence() {
         // 适配移动端：小屏幕需要把相机拉得更远才能看到全貌
         const isMobile = window.innerWidth < 768;
-        const targetZ = isMobile ? 2400 : 1800;
+        const targetZ = isMobile ? 1200 : 1800;
 
         setTimeout(() => {
             // 位置下落 + 拉远
@@ -869,5 +869,6 @@ class AppManager {
 
 const app = new AppManager();
 app.start();
+
 
 
