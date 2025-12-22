@@ -122,7 +122,7 @@ class HelixViewer {
         const helixGroup = new THREE.Group();
             
             // 2. 动态计算半径
-            let radius = Math.max(400, Math.min(window.innerWidth * 0.6, 800));
+            let radius = Math.max(600, Math.min(window.innerWidth * 0.6, 800));
 
             // 如果是极窄的手机屏幕（如折叠屏外屏），稍微再缩小一点
             if (window.innerWidth < 400) radius = 350;
@@ -869,3 +869,4 @@ class AppManager {
 
 const app = new AppManager();
 app.start();
+
