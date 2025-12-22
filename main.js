@@ -125,7 +125,7 @@ class HelixViewer {
             let radius = Math.max(600, Math.min(window.innerWidth * 0.6, 800));
 
             // 如果是极窄的手机屏幕（如折叠屏外屏），稍微再缩小一点
-            if (window.innerWidth < 400) radius = 350;
+            if (window.innerWidth < 768) radius = 650;
 
             const yStep = 30; 
             const totalY = this.data.length * yStep;
@@ -869,4 +869,5 @@ class AppManager {
 
 const app = new AppManager();
 app.start();
+
 
