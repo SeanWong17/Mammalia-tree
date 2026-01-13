@@ -1,110 +1,113 @@
-# DeepTime Mammalia: 交互式哺乳纲演化树
+<div align="center">
+  <img src="assets/logo.png" alt="DeepTime Mammalia Logo" width="120" height="120">
+  <h1>DeepTime Mammalia</h1>
+  <h3>交互式哺乳纲演化树 · 沉浸式科普体验</h3>
+  
+  <p>
+    <b>从合弓纲的余晖，到新生代的繁盛。</b><br>
+    跨越 2 亿年的生命史诗，尽在指尖流转。
+  </p>
 
-> **从合弓纲的余晖，到新生代的繁盛。** > 一个沉浸式的 3D/2D 网页可视化项目，探索哺乳动物 2 亿年的演化史诗。
+  <p>
+    <a href="https://mammalia-tree.pages.dev/">
+      <img src="https://img.shields.io/badge/Live_Demo-立即体验-c5a059?style=for-the-badge&logo=safari" alt="Live Demo">
+    </a>
+  </p>
 
-![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-red.svg)
-![Status](https://img.shields.io/badge/status-Stable-green.svg)
-![Tech](https://img.shields.io/badge/tech-Three.js%20%7C%20D3.js-blue.svg)
+  <p>
+    <img src="https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-lightgrey?style=flat-square" alt="License">
+    <img src="https://img.shields.io/badge/Three.js-r128-black?style=flat-square&logo=three.js" alt="Three.js">
+    <img src="https://img.shields.io/badge/D3.js-v7-orange?style=flat-square&logo=d3.js" alt="D3.js">
+  </p>
+</div>
 
+---
 
-## 📖 项目简介 (Introduction)
+## 📖 简介 (Introduction)
 
-**DeepTime Mammalia** 是一个运行于现代浏览器端的交互式数据可视化作品。它旨在通过直观、美观且具有沉浸感的交互方式，展示从合弓纲（Synapsida）祖先到现代哺乳动物（Mammalia）的复杂演化分支。
+**DeepTime Mammalia** 是一个运行于现代浏览器端的交互式数据可视化作品。不同于枯燥的教科书图表，本项目利用 WebGL 和 CSS3D 技术，试图重构我们对“演化时间”的感知。
 
-不同于传统的枯燥图表，本项目结合了 WebGL 粒子特效、CSS3D 螺旋展示以及 D3.js 动态演化树，为用户提供了一场穿越地质年代的视觉之旅。
+项目基于最新的 **Mammal Diversity Database (MDD) v2.3** 分类系统，将从二叠纪末期的合弓纲祖先到现代哺乳动物的 **167 个科**、**上千个演化节点**，通过双螺旋画廊与动态演化树的形式呈现。
 
-主要数据基于最新的 **Mammal Diversity Database (MDD) v2.3**，时间标尺校准至冠群（Crown Group）分化时间。
+> **🌟 亮点：** 本项目不仅包含科学数据，还隐藏了一个关于“祖先”的彩蛋模式，等待你去发现。
 
 ## ✨ 核心特性 (Features)
 
-### 1. 沉浸式开场 (The Helix Intro)
-- **3D 螺旋画廊**：使用 `Three.js (CSS3DRenderer)` 构建的双螺旋结构，动态展示精选物种卡片。
-- **星空粒子背景**：基于 WebGL 的动态粒子系统，随鼠标/触摸交互流动，营造深邃的历史感。
-- **平滑转场**：从 3D 空间无缝过渡到 2D 平面视图。
+### 🌌 沉浸式 3D 序幕
+- **DNA 双螺旋画廊**：基于 `Three.js (CSS3DRenderer)` 构建，象征生命的遗传密码。
+- **动态星空背景**：WebGL 粒子系统随鼠标与触摸流动，营造深邃的时间感。
+- **平滑运镜**：影院级的相机过渡动画，实现从微观（卡片）到宏观（演化树）的无缝切换。
 
-### 2. 交互式演化树 (The Phylogeny Tree)
-- **动态树状图**：基于 `D3.js` 的高性能渲染，支持上千个节点的流畅展示。
-- **全手势支持**：
-  - **缩放/平移**：支持鼠标滚轮、双指缩放及拖拽漫游。
-  - **折叠/展开**：点击节点即可逐级展开或收起演化分支，支持“一键展开/收起”所有层级。
-- **地质时间轴**：底部集成动态时间轴，实时显示当前视图对应的地质年代（从三叠纪到第四纪）。
-- **智能搜索**：支持中文/拉丁学名搜索，自动定位并高亮显示目标物种位置。
+### 🌿 交互式演化图谱
+- **D3.js 动态树**：高性能渲染，支持从“纲”到“科”的逐级展开/收起。
+- **全手势支持**：支持鼠标滚轮缩放、双指捏合及拖拽漫游，流畅丝滑。
+- **地质时间轴**：底部集成动态标尺，实时显示当前视口对应的地质年代（MYA - Million Years Ago）。
+- **智能检索**：支持中文/拉丁学名实时搜索与高亮定位。
 
-### 3. 详细资料卡片 (Specimen Modal)
-- 点击任意物种名称，弹出详细资料模态框。
-- 包含分类阶元信息（界门纲目科）、物种复原图及详细描述。
+### 🥚 溯源彩蛋 (The Easter Egg)
+- 这是一个致敬生命韧性的隐藏模式。
+- 寻找并点击界面中的“溯源”按钮，你将看到一条穿越大灭绝的幽灵线框路径——那是我们作为“最后的合弓纲”孑遗，在这颗星球上走过的路。
 
-### 4. 溯源彩蛋 (The Origin Easter Egg)
-- 隐藏的“溯源模式”，展示哺乳动物作为“最后的合弓纲”孑遗的演化路径。
-- 独特的视觉风格（幽灵线框风格），致敬那些在二叠纪-三叠纪灭绝事件中消失的先祖。
+## 📸 预览 (Screenshots)
 
-## 📷 效果演示 (Screenshots)
+| 3D 螺旋画廊 | 演化树概览 |
+|:---:|:---:|
+| <img src="examples/gallery.png" alt="Gallery View" width="100%"> | <img src="examples/tree.png" alt="Tree View" width="100%"> |
 
-### 🌌 3D 螺旋画廊
-![Helix View Placeholder](examples/gallery.png)
-
-### 🌿 演化树视图
-![Tree View Placeholder](examples/tree.png)
-
-### 📱 移动端与资料卡片
-![Mobile View Placeholder](examples/card.png)
-
+| 资料卡片 | 溯源彩蛋 |
+|:---:|:---:|
+| <img src="examples/card.png" alt="Detail Card" width="100%"> | <img src="examples/egg.png" alt="Easter Egg View" width="100%"> |
 
 ## 🛠️ 技术栈 (Tech Stack)
 
-本项目采用原生 JavaScript (ES6+) 开发，无大型构建工具依赖，轻量且易于部署。
+本项目采用 **Vanilla JavaScript (ES6+)** 开发，无复杂构建工具依赖，保持代码的纯粹与轻量。
 
-- **核心逻辑**: Vanilla JavaScript
-- **2D 可视化**: [D3.js](https://d3js.org/) (v7) - 处理树状数据结构与布局。
-- **3D 渲染**: [Three.js](https://threejs.org/) (r128) - 处理 WebGL 粒子与 CSS3D 变换。
-- **动画引擎**: [Tween.js](https://github.com/tweenjs/tween.js/) - 处理相机运镜与过渡动画。
-- **字体**: Noto Serif SC & Playfair Display (Google Fonts / Loli.net 镜像)。
+* **Core**: HTML5, CSS3, JavaScript
+* **Visualization**: [D3.js](https://d3js.org/) (v7) - 处理复杂的树状数据结构与布局计算。
+* **3D Engine**: [Three.js](https://threejs.org/) (r128) - 处理 WebGL 粒子背景与 CSS3D 变换。
+* **Animation**: [Tween.js](https://github.com/tweenjs/tween.js/) - 处理平滑的补间动画。
+* **Fonts**: Noto Serif SC & Playfair Display (via Google Fonts)。
 
+## 📂 目录结构 (Structure)
 
-## 🚀 部署与运行 (Deployment)
+为了方便开发者学习，项目保持了扁平化的文件结构。所有数据与图像资源均已通过 JS 变量预加载，**无需后端环境**。
 
-本项目为纯静态项目（Static Site），支持“一键部署”。
+```text
+Mammalia-tree-main/
+├── index.html       # 入口文件 (HTML/CSS/Shader)
+├── main.js          # 核心逻辑 (Three.js场景 + D3.js树 + 交互控制)
+├── data.js          # 演化树拓扑数据 (JSON Object)
+├── images_data.js   # 图像资源 (Base64 encoded)
+└── README.md        # 项目说明
+```
 
-### 推荐部署方案
+## 🚀 本地运行 (How to Run)
 
-1.  **Cloudflare Pages (推荐)**
-    - 将本项目 Fork 到你的 GitHub。
-    - 在 Cloudflare Pages 中连接仓库，设置根目录为项目根目录。
-    - 自动部署，国内访问速度较快。
+得益于零依赖和数据内嵌的设计，本项目具有极佳的便携性：
 
-2.  **本地运行**
-    由于浏览器的 CORS 安全策略，直接双击打开 `index.html` 可能导致数据加载失败。建议使用本地服务器：
-    ```bash
-    # 使用 Python
-    python -m http.server 8000
-    
-    # 或者使用 Node.js http-server
-    npx http-server
-    ```
-    然后在浏览器访问 `http://localhost:8000`。
+1.  **下载**：Clone 或下载本项目压缩包。
+2.  **运行**：直接双击 `index.html` 即可在浏览器中流畅运行。
+3.  **注意**：无需安装 Node.js，无需配置本地服务器 (Live Server)，开箱即用。
 
-    或者访问在线演示：[Live Demo](https://mammalia-tree.pages.dev/)
-    备用地址：[Live Demo2](https://seanwong17.github.io/Mammalia-tree/)
+## 🤝 致谢与声明 (Credits & Disclaimer)
 
-## 📂 数据与素材说明 (Credits)
+本项目的诞生离不开开源社区与 AI 技术的协作：
 
-本项目的制作离不开开源社区与 AI 技术的支持：
+* **数据基准**：分类系统参考 **Mammal Diversity Database (MDD) v2.3** 与 **Paleobiology Database**。
+* **AI 辅助编程**：核心代码逻辑与 Shader 优化由 **Google Gemini** 协助完成。
+* **AI 图像生成**：物种复原图由 AI 模型 **nanobanana** 生成。
+    * *注：AI 生成图像旨在提供艺术化的视觉参考，可能存在解剖学上的细节偏差，请勿直接用于严谨的学术引用。*
 
-- **数据来源**：
-  - 分类系统参考：**Mammal Diversity Database (MDD) v2.3**
-  - 古生物数据交叉验证：**Paleobiology Database**
-- **图像资源**：
-  - 所有物种复原图均由 AI 模型 **nanobanana** 生成。
-  - *注：AI 生成图像可能存在解剖学上的不准确或艺术化夸张，仅供视觉参考，严禁用于严谨的学术论文配图。*
-- **特别鸣谢**：
-  - 代码协助与技术支持：**Google Gemini**
+## 📄 开源协议 (License)
 
+本作品采用 [知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议 (CC BY-NC-SA 4.0)](http://creativecommons.org/licenses/by-nc-sa/4.0/) 进行许可。
 
-## ⚠️ 版权与许可 (License)
+* ✅ 你可以自由地分享、修改本项目。
+* ❌ 不可用于商业用途。
+* 📝 转载或修改请注明原作者：**Sean Wong**。
 
-本作品采用 [知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议](http://creativecommons.org/licenses/by-nc-sa/4.0/) 进行许可。
+---
 
-[![CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
-
-This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
-
+<div align="center">
+  <sub>Designed with ❤️ by Sean Wong</sub>
+</div>
