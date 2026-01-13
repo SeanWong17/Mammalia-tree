@@ -2,6 +2,10 @@
   <img src="assets/logo.png" alt="DeepTime Mammalia Logo" width="120" height="120">
   <h1>DeepTime Mammalia</h1>
   <h3>交互式哺乳纲演化树 · 沉浸式科普体验</h3>
+
+  <p>
+    中文 | <a href="README_EN.md">English</a>
+  </p>
   
   <p>
     <b>从合弓纲的余晖，到新生代的繁盛。</b><br>
