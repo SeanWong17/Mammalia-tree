@@ -7,16 +7,14 @@
     中文 | <a href="README_EN.md">English</a>
   </p>
   
-  <p>
-    <b>从合弓纲的余晖，到新生代的繁盛。</b><br>
-    跨越 2 亿年的生命史诗，尽在指尖流转。
-  </p>
+<p>
+  <b>从合弓纲的余晖，到新生代的繁盛。</b><br>
+  跨越 2 亿年的生命史诗，尽在指尖流转。
+</p>
 
-  <p>
-    <a href="https://mammalia-tree.pages.dev/">
-      <img src="https://img.shields.io/badge/Live_Demo-立即体验-c5a059?style=for-the-badge&logo=safari" alt="Live Demo">
-    </a>
-  </p>
+<h3>
+  👉 <a href="https://mammalia-tree.pages.dev/">点击进入：沉浸式体验 (Live Demo)</a> 👈
+</h3>
 
   <p>
     <img src="https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-lightgrey?style=flat-square" alt="License">
