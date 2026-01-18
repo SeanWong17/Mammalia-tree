@@ -16,11 +16,14 @@
   👉 <a href="https://mammalia-tree.pages.dev/">点击进入：沉浸式体验 (Live Demo)</a> 👈
 </h3>
 
-  <p>
+<p>
+    <a href="https://github.com/ruanyf/weekly/blob/master/docs/issue-381.md">
+        <img src="https://img.shields.io/badge/科技爱好者周刊-第381期推荐-ff69b4?style=flat-square&logo=rss" alt="Tech Enthusiast Weekly">
+    </a>
     <img src="https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-lightgrey?style=flat-square" alt="License">
     <img src="https://img.shields.io/badge/Three.js-r128-black?style=flat-square&logo=three.js" alt="Three.js">
     <img src="https://img.shields.io/badge/D3.js-v7-orange?style=flat-square&logo=d3.js" alt="D3.js">
-  </p>
+</p>
 </div>
 
 ---
@@ -76,11 +79,14 @@
 
 ```text
 Mammalia-tree-main/
+├── assets/          # 静态资源 (Logo等)
+├── examples/        # 演示截图
 ├── index.html       # 入口文件 (HTML/CSS/Shader)
 ├── main.js          # 核心逻辑 (Three.js场景 + D3.js树 + 交互控制)
 ├── data.js          # 演化树拓扑数据 (JSON Object)
 ├── images_data.js   # 图像资源 (Base64 encoded)
-└── README.md        # 项目说明
+├── README.md        # 中文说明
+└── README_EN.md     # English Documentation
 ```
 
 ## 🚀 本地运行 (How to Run)
@@ -108,6 +114,9 @@ Mammalia-tree-main/
 * ❌ 不可用于商业用途。
 * 📝 转载或修改请注明原作者：**Sean Wong**。
 
+## 📈 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=SeanWong17/Mammalia-tree&type=Date)](https://star-history.com/#SeanWong17/Mammalia-tree&Date)
 ---
 
 <div align="center">

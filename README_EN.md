@@ -18,11 +18,14 @@
     </a>
   </p>
 
-  <p>
-    <img src="https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-lightgrey?style=flat-square" alt="License">
-    <img src="https://img.shields.io/badge/Three.js-r128-black?style=flat-square&logo=three.js" alt="Three.js">
-    <img src="https://img.shields.io/badge/D3.js-v7-orange?style=flat-square&logo=d3.js" alt="D3.js">
-  </p>
+<p>
+  <a href="https://github.com/ruanyf/weekly/blob/master/docs/issue-381.md">
+    <img src="https://img.shields.io/badge/Featured_in-Tech_Weekly_%23381-ff69b4?style=flat-square&logo=rss" alt="Tech Enthusiast Weekly">
+  </a>
+  <img src="https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-lightgrey?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/Three.js-r128-black?style=flat-square&logo=three.js" alt="Three.js">
+  <img src="https://img.shields.io/badge/D3.js-v7-orange?style=flat-square&logo=d3.js" alt="D3.js">
+</p>
 </div>
 
 ---
@@ -78,11 +81,14 @@ The project maintains a flat file structure for easy learning. All data and imag
 
 ```text
 Mammalia-tree-main/
+├── assets/          # Static assets (Logo, etc.)
+├── examples/        # Screenshots for README
 ├── index.html       # Entry point (HTML/CSS/Shader)
 ├── main.js          # Core logic (Three.js scene + D3.js tree + Interactions)
 ├── data.js          # Phylogenetic topology data (JSON Object)
 ├── images_data.js   # Image resources (Base64 encoded)
-└── README.md        # Chinese Documentation
+├── README.md        # Chinese Documentation
+└── README_EN.md     # English Documentation
 ```
 
 ## 🚀 How to Run
@@ -109,6 +115,10 @@ This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareA
 * ✅ You are free to share and adapt this project.
 * ❌ Commercial use is prohibited.
 * 📝 Please attribute the original author: **Sean Wong**.
+
+## 📈 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=SeanWong17/Mammalia-tree&type=Date)](https://star-history.com/#SeanWong17/Mammalia-tree&Date)
 
 ---
 
