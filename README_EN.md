@@ -51,9 +51,18 @@ Based on the latest **Mammal Diversity Database (MDD) v2.3**, it presents the co
 - **Geological Timeline**: An integrated dynamic ruler at the bottom displays the geological epoch corresponding to the current viewport (MYA - Million Years Ago).
 - **Smart Search**: Supports real-time search and highlighting by Latin scientific names or Chinese names.
 
+### 🌐 Internationalization
+- **Language Toggle**: One-click switch between Chinese and English interface.
+- **Smart Text Adaptation**: Node names, descriptions, and UI elements automatically adapt to the current language.
+
 ### 🥚 The Origin Easter Egg
 - A hidden mode paying tribute to the resilience of life.
 - Find and click the "Origin" (溯源) button to reveal a ghostly wireframe path crossing the great extinctions—the path we walked as the last survivors of the Synapsids.
+
+### ⚡ Performance Optimization
+- **Responsive Design**: Automatically adapts to desktop and mobile devices with optimized display.
+- **Dynamic Resource Loading**: Adjusts particle count and rendering quality based on device performance.
+- **Modular Architecture**: Clean code separation for easy maintenance and secondary development.
 
 ## 📸 Screenshots
 
@@ -77,27 +86,77 @@ This project is built with **Vanilla JavaScript (ES6+)** with no complex build t
 
 ## 📂 Structure
 
-The project maintains a flat file structure for easy learning. All data and image resources are preloaded via JS variables, requiring **no backend environment**.
+The project adopts a modular design for easy maintenance and extension. All data and image resources are preloaded via JS variables, requiring **no backend environment**.
 
 ```text
 Mammalia-tree-main/
-├── assets/          # Static assets (Logo, etc.)
-├── examples/        # Screenshots for README
-├── index.html       # Entry point (HTML/CSS/Shader)
-├── main.js          # Core logic (Three.js scene + D3.js tree + Interactions)
-├── data.js          # Phylogenetic topology data (JSON Object)
-├── images_data.js   # Image resources (Base64 encoded)
-├── README.md        # Chinese Documentation
-└── README_EN.md     # English Documentation
+├── assets/                  # Static assets
+│   └── logo.png            # Project Logo
+├── data/                    # Data files
+│   ├── data.js             # Phylogenetic topology data (JSON Object)
+│   └── images_data.js      # Image resources (Base64 encoded)
+├── examples/                # Screenshots for README
+├── src/                     # Source code
+│   ├── css/
+│   │   └── style.css       # Main stylesheet
+│   └── js/
+│       ├── config.js       # Global configuration (performance, layout, etc.)
+│       ├── i18n.js         # Internationalization (Chinese/English)
+│       ├── utils.js        # Utility functions
+│       ├── easter_egg_data.js  # Easter egg data
+│       └── main.js         # Core logic (Three.js + D3.js)
+├── index.html               # Entry point
+├── requirements.txt         # Python dependencies (translation script)
+├── README.md                # Chinese Documentation
+└── README_EN.md             # English Documentation
 ```
 
 ## 🚀 How to Run
 
 Thanks to its zero-dependency and embedded data design, this project is extremely portable:
 
+### Method 1: Direct Open (Recommended for Quick Preview)
 1.  **Download**: Clone or download the repository.
 2.  **Run**: Simply double-click `index.html` to run smoothly in your browser.
-3.  **Note**: No Node.js installation required, no local server configuration needed (though recommended to avoid potential local CORS strictness in some browsers).
+3.  **Note**: No Node.js installation required, no local server configuration needed.
+
+### Method 2: Local Server (Recommended for Development)
+To avoid potential CORS restrictions in some browsers, it's recommended to use a local server:
+
+```bash
+# Using Python 3
+python -m http.server 8000
+
+# Or using Node.js (requires http-server)
+npx http-server -p 8000
+```
+
+Then visit `http://localhost:8000`
+
+## 🔧 Customization
+
+The project supports customization through `src/js/config.js`:
+
+```javascript
+// Performance configuration
+performance: {
+    particleCount: { desktop: 2000, mobile: 1000 },  // Particle count
+    cardCount: { base: 30, min: 35, max: 80 }        // Card count
+}
+
+// 3D scene configuration
+scene3D: {
+    helix: { radiusBase: 600, yStep: 30 },           // Helix radius and spacing
+    camera: { targetZDesktop: 2000 }                 // Camera position
+}
+
+// Tree configuration
+tree: {
+    width: { desktop: 2000, mobile: 1200 },          // Tree width
+    nodeSpacing: 45,                                 // Node spacing
+    zoom: { scaleExtent: [0.15, 3] }                 // Zoom range
+}
+```
 
 ## 🤝 Credits & Disclaimer
 
