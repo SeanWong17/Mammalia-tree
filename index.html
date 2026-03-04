@@ -76,32 +76,32 @@
         <div class="modal-card">
             <span class="modal-close" id="info-close">&times;</span>
             <div class="about-content">
-                <h2>关于本项目</h2>
-                <p>这是一个交互式哺乳纲演化可视化项目，旨在以沉浸式的方式展示从合弓纲到现代哺乳动物壮丽的演化历程。</p>
+                <h2 data-i18n="aboutTitle">关于本项目</h2>
+                <p data-i18n="aboutIntro">这是一个交互式哺乳纲演化可视化项目，旨在以沉浸式的方式展示从合弓纲到现代哺乳动物壮丽的演化历程。</p>
                 
-                <h3>数据与技术说明</h3>
+                <h3 data-i18n="dataTitle">数据与技术说明</h3>
                 <ul>
-                    <li><strong>数据基准</strong>：分类系统与演化关系主要参考最新的 <strong>Mammal Diversity Database (MDD) v2.3</strong>。</li>
-                    <li><strong>时间标尺</strong>：演化树节点时间主要标记为<strong>冠群 (Crown Group)</strong> 的分化时间。</li>
-                    <li><strong>图像生成</strong>：本项目囊括了近现代哺乳纲 <strong>167个科</strong> 的代表物种画像，均由 <strong>nanobanana</strong> 模型生成。受限于开发者的专业背景，难以完全甄别 AI 在特定物种形态特征上的细微谬误，若发现配图有误，恳请不吝指正。</li>
-                    <li><strong>技术架构</strong>：本项目基于 D3.js (2D) 与 Three.js (3D) 混合开发。为了提升国内访问体验，所有图像资源均采用 <strong>CDN</strong> 链路进行加速分发。</li>
+                    <li><strong data-i18n="dataSource">数据基准</strong><span data-i18n="dataSourceDesc">：分类系统与演化关系主要参考最新的 <strong>Mammal Diversity Database (MDD) v2.3</strong>。</span></li>
+                    <li><strong data-i18n="timeScale">时间标尺</strong><span data-i18n="timeScaleDesc">：演化树节点时间主要标记为<strong>冠群 (Crown Group)</strong> 的分化时间。</span></li>
+                    <li><strong data-i18n="imageGen">图像生成</strong><span data-i18n="imageGenDesc">：本项目囊括了近现代哺乳纲 <strong>167个科</strong> 的代表物种画像，均由 <strong>nanobanana</strong> 模型生成。受限于开发者的专业背景，难以完全甄别 AI 在特定物种形态特征上的细微谬误，若发现配图有误，恳请不吝指正。</span></li>
+                    <li><strong data-i18n="techStack">技术架构</strong><span data-i18n="techStackDesc">：本项目基于 D3.js (2D) 与 Three.js (3D) 混合开发。为了提升国内访问体验，所有图像资源均采用 <strong>CDN</strong> 链路进行加速分发。</span></li>
                 </ul>
 
-                <h3>操作指南</h3>
+                <h3 data-i18n="guideTitle">操作指南</h3>
                 <ul>
-                    <li><strong>拖拽画布</strong>：自由移动演化树视图</li>
-                    <li><strong>滚轮/双指</strong>：缩放查看演化细节</li>
-                    <li><strong>点击节点</strong>：展开或收起演化分支</li>
-                    <li><strong>点击文字</strong>：查看物种/科目的详细资料卡片</li>
+                    <li><strong data-i18n="guideDrag">拖拽画布</strong><span data-i18n="guideDragDesc">：自由移动演化树视图</span></li>
+                    <li><strong data-i18n="guideZoom">滚轮/双指</strong><span data-i18n="guideZoomDesc">：缩放查看演化细节</span></li>
+                    <li><strong data-i18n="guideNode">点击节点</strong><span data-i18n="guideNodeDesc">：展开或收起演化分支</span></li>
+                    <li><strong data-i18n="guideText">点击文字</strong><span data-i18n="guideTextDesc">：查看物种/科目的详细资料卡片</span></li>
                 </ul>
 
-                <h3>致谢与联系</h3>
-                <p>本项目在开发过程中特别感谢 <strong>Google Gemini</strong> 提供的代码协助与技术支持。</p>
-                <p>这不仅是一个科普项目，也是一次对生命演化史的致敬。受限于个人知识水平，项目中可能存在数据错误或Bug，您的每一个反馈都是项目进步的动力。</p>
+                <h3 data-i18n="thanksTitle">致谢与联系</h3>
+                <p data-i18n="thanksGemini">本项目在开发过程中特别感谢 <strong>Google Gemini</strong> 提供的代码协助与技术支持。</p>
+                <p data-i18n="thanksNote">这不仅是一个科普项目，也是一次对生命演化史的致敬。受限于个人知识水平，项目中可能存在数据错误或Bug，您的每一个反馈都是项目进步的动力。</p>
                 
                 <ul style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 15px;">
-                    <li><strong>当前版本</strong>：v1.0 (Initial Release)</li>
-                    <li><strong>反馈邮箱</strong>：<a href="mailto:shuowang1998@163.com" style="color: var(--accent-color); text-decoration: none;">shuowang1998@163.com</a></li>
+                    <li><strong data-i18n="version">当前版本</strong>：v1.0 (Initial Release)</li>
+                    <li><strong data-i18n="feedback">反馈邮箱</strong>：<a href="mailto:shuowang1998@163.com" style="color: var(--accent-color); text-decoration: none;">shuowang1998@163.com</a></li>
                 </ul>
                 
                 <div class="about-footer">

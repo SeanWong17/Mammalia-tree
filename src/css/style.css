@@ -814,25 +814,35 @@ h1 {
     #top-controls {
         top: 10px;
         right: 10px;
-        left: 10px;
-        justify-content: space-between;
+        gap: 6px;
+        flex-wrap: wrap;
+        max-width: calc(100% - 20px);
+    }
+
+    #lang-switch {
+        padding: 8px 12px;
+        font-size: 13px;
+        height: 32px;
+        line-height: 16px;
     }
 
     #search-container {
-        order: 2;
+        order: 3;
         width: 100%;
-        margin-top: 10px;
+        margin-top: 6px;
     }
 
     #search-input {
         width: 100%;
         box-sizing: border-box;
+        font-size: 13px;
+        padding: 8px 12px;
     }
 
     .tree-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 18px;
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
     }
 
     #github-link {
@@ -853,7 +863,11 @@ h1 {
         top: 10px;
         left: 62px;
         font-size: 11px;
-        padding: 0 12px;
+        padding: 0 10px;
+        max-width: calc(50vw - 62px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .modal-card {
