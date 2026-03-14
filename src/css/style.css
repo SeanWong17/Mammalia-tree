@@ -591,7 +591,7 @@ h1 {
 
 .node.highlighted circle {
     r: 12 !important;
-    fill: #c5a059 !important;
+    fill: #c5a059;
     stroke: #fff;
     stroke-width: 4px;
     filter: drop-shadow(0 0 8px rgba(197, 160, 89, 0.8));
@@ -613,9 +613,9 @@ h1 {
 
 .node.highlighted text {
     font-weight: bold;
-    font-size: 16px !important;
-    fill: #c5a059 !important;
-    stroke: #f4f1ea !important;
+    font-size: 16px;
+    fill: #c5a059;
+    stroke: #f4f1ea;
     stroke-width: 5px;
 }
 
@@ -640,29 +640,29 @@ h1 {
 
 /* 彩蛋相关样式 */
 .node.ghost circle {
-    fill: #333 !important;
-    stroke: #555 !important;
+    fill: #333;
+    stroke: #555;
     opacity: 0.6;
 }
 
 .node.ghost text {
-    fill: #666 !important;
+    fill: #666;
     font-style: italic;
-    font-size: 10px !important;
+    font-size: 10px;
 }
 
 .link.ghost {
-    stroke: #444 !important;
-    stroke-width: 1px !important;
+    stroke: #444;
+    stroke-width: 1px;
     stroke-dasharray: 4, 4;
     opacity: 0.4;
 }
 
 .link.ghost.survivor-line {
-    stroke: var(--accent-color) !important;
+    stroke: var(--accent-color);
     stroke-dasharray: none;
     opacity: 0.8;
-    stroke-width: 2px !important;
+    stroke-width: 2px;
 }
 
 #easter-egg-overlay {

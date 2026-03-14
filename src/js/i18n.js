@@ -206,8 +206,6 @@ function getLocalizedText(data, field) {
                 return data.en_name;
             } else if (data.family_en) {
                 return data.family_en;
-            } else if (data.en_name || data.family_en) {
-                return data.en_name || data.family_en;
             } else {
                 // 如果都没有，显示拉丁学名（通常是键名）
                 return data.cn_name || data.family_cn || 'Unknown';

@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="DeepTime Mammalia - 一个交互式哺乳纲演化时间树可视化项目，展示从合弓纲到现代哺乳动物的演化历程。">
+    <link rel="icon" href="assets/logo.png" type="image/png">
     <title>最后的合弓纲 - 哺乳纲演化</title>
 
-    <link href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/style.css">
     
-    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS3DRenderer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -16,7 +18,7 @@
 
     <!-- 项目文件：按依赖顺序加载 -->
     <script src="data/data.js"></script>
-    <script src="data/images_data.js"></script>
+    <!-- images_data.js (7.9MB) 由 main.js 异步懒加载，不阻塞首屏渲染 -->
     <script src="src/js/easter_egg_data.js"></script>
     <script src="src/js/i18n.js"></script>
     <script src="src/js/config.js"></script>
@@ -40,10 +42,10 @@
     <div id="container-viz"></div>
     
     <div id="top-controls">
-        <button id="lang-switch" class="tree-btn" title="切换语言 / Switch Language">EN</button>
-        <button id="btn-collapse-all" class="tree-btn" title="逐级收起">-</button>
-        <button id="btn-expand-all" class="tree-btn" title="逐级展开">+</button>
-        <button id="btn-info" class="tree-btn info-icon" title="说明与日志">i</button>
+        <button id="lang-switch" class="tree-btn" title="切换语言 / Switch Language" aria-label="切换语言 / Switch Language">EN</button>
+        <button id="btn-collapse-all" class="tree-btn" title="逐级收起" aria-label="逐级收起">-</button>
+        <button id="btn-expand-all" class="tree-btn" title="逐级展开" aria-label="逐级展开">+</button>
+        <button id="btn-info" class="tree-btn info-icon" title="说明与日志" aria-label="说明与日志">i</button>
         <div id="search-container">
             <input type="text" id="search-input" placeholder="搜索科名（中文/拉丁名）...">
             <div id="search-results"></div>

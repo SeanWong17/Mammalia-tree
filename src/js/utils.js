@@ -111,69 +111,44 @@ const DOMUtils = {
     },
     
     /**
-     * 创建卡片元素
+     * 创建卡片元素（使用 DOM API 避免 XSS）
      */
     createCardElement(item, imgBase64) {
         const element = document.createElement('div');
         element.className = item.isHero ? 'card-element hero' : 'card-element';
-        
-        element.innerHTML = `
-            <div class="card-content">
-                <img src="${imgBase64}" class="card-img" loading="lazy" 
-                     onerror="this.style.display='none';this.parentElement.style.background='#222'">
-                <div class="card-info">
-                    <span class="card-cn">${getLocalizedText(item, 'name')}</span>
-                    <span class="card-en">${item.en_name}</span>
-                </div>
-            </div>
-        `;
-        
-        return element;
-    }
-};
 
-// 动画工具
-const AnimationUtils = {
-    /**
-     * 平滑过渡
-     */
-    smoothTransition(element, property, from, to, duration, callback) {
-        const startTime = Date.now();
-        const animate = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const value = from + (to - from) * progress;
-            
-            element.style[property] = value;
-            
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else if (callback) {
-                callback();
-            }
-        };
-        animate();
-    },
-    
-    /**
-     * 淡出效果
-     */
-    fadeOut(element, duration = 500, callback) {
-        const startOpacity = parseFloat(getComputedStyle(element).opacity) || 1;
-        const startTime = Date.now();
-        
-        const fade = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            element.style.opacity = startOpacity * (1 - progress);
-            
-            if (progress < 1) {
-                requestAnimationFrame(fade);
-            } else if (callback) {
-                callback();
-            }
-        };
-        fade();
+        const content = document.createElement('div');
+        content.className = 'card-content';
+
+        const img = document.createElement('img');
+        img.className = 'card-img';
+        img.loading = 'lazy';
+        if (imgBase64) {
+            img.src = imgBase64;
+        }
+        img.addEventListener('error', function() {
+            this.style.display = 'none';
+            this.parentElement.style.background = '#222';
+        });
+
+        const info = document.createElement('div');
+        info.className = 'card-info';
+
+        const cnSpan = document.createElement('span');
+        cnSpan.className = 'card-cn';
+        cnSpan.textContent = getLocalizedText(item, 'name');
+
+        const enSpan = document.createElement('span');
+        enSpan.className = 'card-en';
+        enSpan.textContent = item.en_name;
+
+        info.appendChild(cnSpan);
+        info.appendChild(enSpan);
+        content.appendChild(img);
+        content.appendChild(info);
+        element.appendChild(content);
+
+        return element;
     }
 };
 

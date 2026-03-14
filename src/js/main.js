@@ -4,18 +4,51 @@
  */
 
 // 图像资源引用（images_data.js 中定义为 LOCAL_IMAGES）
-const IMG_DATA = (typeof LOCAL_IMAGES !== 'undefined') ? LOCAL_IMAGES : {};
+// 使用函数实时查询，支持异步加载后自动生效
+function getImage(key) {
+    return (typeof LOCAL_IMAGES !== 'undefined' && LOCAL_IMAGES[key]) ? LOCAL_IMAGES[key] : '';
+}
+
+/**
+ * 异步加载图片数据（7.9MB），避免阻塞首屏渲染
+ * 兼容 file:// 协议（双击 index.html 直接打开）
+ */
+function loadImageData() {
+    // 如果已经通过 <script> 标签同步加载过，直接跳过
+    if (typeof LOCAL_IMAGES !== 'undefined') return;
+
+    const script = document.createElement('script');
+    script.src = 'data/images_data.js';
+    script.onerror = () => {
+        console.warn('图片数据加载失败，部分图片可能无法显示');
+    };
+    document.head.appendChild(script);
+}
 
 /** Class 1: ParticleBackground (WebGL 星空) */
 class ParticleBackground {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
-        this.scene = null; this.camera = null; this.renderer = null; this.particles = null;
-        this.animationFrameId = null; this.mouseX = 0; this.mouseY = 0;
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.particles = null;
+        this.animationFrameId = null;
+        this.mouseX = 0;
+        this.mouseY = 0;
+
+        // 预绑定方法引用，确保 removeEventListener 能正确匹配
+        this._onResize = this.onResize.bind(this);
+        this._onMouseMove = this.onMouseMove.bind(this);
+        this._onTouchMove = this._handleTouchMove.bind(this);
+        this._animate = this.animate.bind(this);
+
         this.init();
     }
+
     init() {
-        const width = window.innerWidth; const height = window.innerHeight;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, width / height, 1, 3000);
         this.camera.position.z = 1000;
@@ -24,55 +57,49 @@ class ParticleBackground {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.container.appendChild(this.renderer.domElement);
         this.createParticles();
-        window.addEventListener('resize', this.onResize.bind(this));
-        document.addEventListener('mousemove', this.onMouseMove.bind(this));
-        // 增加触摸移动支持
-        document.addEventListener('touchmove', (e) => {
-            if(e.touches.length > 0) {
-                this.mouseX = (e.touches[0].clientX - window.innerWidth / 2) * 0.0003;
-                this.mouseY = (e.touches[0].clientY - window.innerHeight / 2) * 0.0003;
-            }
-        }, {passive: true});
-        this.animate();
+        window.addEventListener('resize', this._onResize);
+        document.addEventListener('mousemove', this._onMouseMove);
+        document.addEventListener('touchmove', this._onTouchMove, { passive: true });
+        this._animate();
     }
+
     createParticles() {
-        // 使用配置文件中的粒子数量
-        const particleCount = isMobile() 
+        const particleCount = isMobile()
             ? getConfig('performance.particleCount.mobile')
             : getConfig('performance.particleCount.desktop');
-            
+
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
         const sizes = new Float32Array(particleCount);
         const colorPalette = [
-            new THREE.Color(0xc5a059), 
-            new THREE.Color(0x4a90a4), 
-            new THREE.Color(0x8b7355), 
+            new THREE.Color(0xc5a059),
+            new THREE.Color(0x4a90a4),
+            new THREE.Color(0x8b7355),
             new THREE.Color(0xffffff)
         ];
-        
+
         for (let i = 0; i < particleCount; i++) {
             const radius = 800 + Math.random() * 1200;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
-            
+
             positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
             positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
             positions[i * 3 + 2] = radius * Math.cos(phi);
-            
+
             const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
             colors[i * 3] = color.r;
             colors[i * 3 + 1] = color.g;
             colors[i * 3 + 2] = color.b;
-            
+
             sizes[i] = Math.random() * 3 + 1;
         }
-        
+
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-        
+
         const material = new THREE.PointsMaterial({
             size: 2,
             vertexColors: true,
@@ -81,17 +108,39 @@ class ParticleBackground {
             blending: THREE.AdditiveBlending,
             sizeAttenuation: true
         });
-        
+
         this.particles = new THREE.Points(geometry, material);
         this.scene.add(this.particles);
     }
-    onMouseMove(e) { this.mouseX = (e.clientX - window.innerWidth / 2) * 0.0003; this.mouseY = (e.clientY - window.innerHeight / 2) * 0.0003; }
-    onResize() { if (!this.camera) return; this.camera.aspect = window.innerWidth / window.innerHeight; this.camera.updateProjectionMatrix(); this.renderer.setSize(window.innerWidth, window.innerHeight); }
+
+    _handleTouchMove(e) {
+        if (e.touches.length > 0) {
+            this.mouseX = (e.touches[0].clientX - window.innerWidth / 2) * 0.0003;
+            this.mouseY = (e.touches[0].clientY - window.innerHeight / 2) * 0.0003;
+        }
+    }
+
+    onMouseMove(e) {
+        this.mouseX = (e.clientX - window.innerWidth / 2) * 0.0003;
+        this.mouseY = (e.clientY - window.innerHeight / 2) * 0.0003;
+    }
+
+    onResize() {
+        if (!this.camera) return;
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
     animate() {
-        this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
-        if (this.particles) { this.particles.rotation.y += 0.0002 + this.mouseX * 0.1; this.particles.rotation.x += 0.0001 + this.mouseY * 0.1; }
+        this.animationFrameId = requestAnimationFrame(this._animate);
+        if (this.particles) {
+            this.particles.rotation.y += 0.0002 + this.mouseX * 0.1;
+            this.particles.rotation.x += 0.0001 + this.mouseY * 0.1;
+        }
         this.renderer.render(this.scene, this.camera);
     }
+
     fadeOut(duration = 500) {
         const startOpacity = this.particles.material.opacity;
         const startTime = Date.now();
@@ -103,10 +152,28 @@ class ParticleBackground {
         };
         fade();
     }
+
     dispose() {
         if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
-        if (this.container && this.renderer) this.container.removeChild(this.renderer.domElement);
-        this.scene = null; this.camera = null; this.renderer = null;
+        // 正确移除所有事件监听器
+        window.removeEventListener('resize', this._onResize);
+        document.removeEventListener('mousemove', this._onMouseMove);
+        document.removeEventListener('touchmove', this._onTouchMove);
+        // 释放 GPU 资源
+        if (this.particles) {
+            this.particles.geometry.dispose();
+            this.particles.material.dispose();
+        }
+        if (this.renderer) {
+            this.renderer.dispose();
+            if (this.container && this.renderer.domElement.parentNode === this.container) {
+                this.container.removeChild(this.renderer.domElement);
+            }
+        }
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.particles = null;
     }
 }
 
@@ -114,32 +181,41 @@ class ParticleBackground {
 class HelixViewer {
     constructor(containerId, data, onCardClick) {
         this.container = document.getElementById(containerId);
-        this.data = data; this.onCardClick = onCardClick; this.objects = [];
+        this.data = data;
+        this.onCardClick = onCardClick;
+        this.objects = [];
+
+        // 预绑定方法引用
+        this._onResize = this.onResize.bind(this);
+        this._animate = this.animate.bind(this);
+
         this.init();
     }
+
     init() {
-        const width = window.innerWidth; const height = window.innerHeight;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
         this.camera = new THREE.PerspectiveCamera(50, width / height, 1, 5000);
-        
+
         // 初始状态：极高空俯视
-        this.camera.position.set(0, 5000, 10); 
+        this.camera.position.set(0, 5000, 10);
         this.camera.lookAt(0, 0, 0);
 
         this.scene = new THREE.Scene();
         this.renderer = new THREE.CSS3DRenderer();
         this.renderer.setSize(width, height);
         this.container.appendChild(this.renderer.domElement);
-        
+
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true; 
+        this.controls.enableDamping = true;
         this.controls.autoRotate = true;
-        this.controls.autoRotateSpeed = 60; 
-        this.controls.enabled = false; 
+        this.controls.autoRotateSpeed = 60;
+        this.controls.enabled = false;
 
         this.renderer.domElement.style.touchAction = 'none';
         this.createHelix();
-        window.addEventListener('resize', this.onResize.bind(this));
-        this.animate();
+        window.addEventListener('resize', this._onResize);
+        this._animate();
 
         this.playIntroSequence();
     }
@@ -147,39 +223,39 @@ class HelixViewer {
     createHelix() {
         const helixGroup = new THREE.Group();
         const config = getConfig('scene3D.helix');
-        
+
         // 动态计算半径
         let radius = Math.max(config.radiusBase, Math.min(window.innerWidth * 0.6, config.radiusMax));
         if (isMobile()) radius = config.radiusMobile;
-        
+
         const yStep = config.yStep;
         const totalY = this.data.length * yStep;
 
         this.data.forEach((item, i) => {
-            const imgBase64 = IMG_DATA[item.en_name] || '';
+            const imgBase64 = getImage(item.en_name);
             const element = DOMUtils.createCardElement(item, imgBase64);
-            
+
             element.addEventListener('click', () => {
                 if (this.onCardClick) this.onCardClick(item);
             });
             element.addEventListener('touchstart', () => {}, { passive: true });
 
             const object = new THREE.CSS3DObject(element);
-            
+
             // 调整旋转角度密度
             const thetaDensity = config.thetaDensity * (config.radiusBase / radius);
             const theta = i * thetaDensity;
             const y = -(totalY / 2) + i * yStep;
             const offset = (i % 2) * Math.PI;
-            
+
             object.position.setFromCylindricalCoords(radius, theta + offset, y);
             const vector = new THREE.Vector3(0, object.position.y, 0);
             object.lookAt(vector);
-            
+
             helixGroup.add(object);
             this.objects.push(object);
         });
-        
+
         this.scene.add(helixGroup);
     }
 
@@ -207,23 +283,59 @@ class HelixViewer {
         }, 1500);
     }
 
-    onResize() { if (!this.camera) return; this.camera.aspect = window.innerWidth / window.innerHeight; this.camera.updateProjectionMatrix(); this.renderer.setSize(window.innerWidth, window.innerHeight); }
-    animate() { this.animationFrameId = requestAnimationFrame(this.animate.bind(this)); this.controls.update(); TWEEN.update(); this.renderer.render(this.scene, this.camera); }
-    
+    onResize() {
+        if (!this.camera) return;
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    animate() {
+        this.animationFrameId = requestAnimationFrame(this._animate);
+        this.controls.update();
+        TWEEN.update();
+        this.renderer.render(this.scene, this.camera);
+    }
+
     zoomInAndEnd(onComplete) {
         const overlay = document.getElementById('transition-overlay');
         this.container.classList.remove('interactive');
-        new TWEEN.Tween(this.controls).to({ autoRotateSpeed: 20 }, 2000).easing(TWEEN.Easing.Cubic.In).start();
-        new TWEEN.Tween(this.camera.position).to({ x: 0, y: 0, z: -2000 }, 2000).easing(TWEEN.Easing.Exponential.In).onUpdate(() => this.camera.lookAt(this.scene.position)).start();
-        setTimeout(() => { overlay.style.opacity = 1; }, 1500);
-        setTimeout(() => { this.dispose(); if (onComplete) onComplete(); setTimeout(() => { overlay.style.opacity = 0; }, 300); }, 2000);
+
+        new TWEEN.Tween(this.controls)
+            .to({ autoRotateSpeed: 20 }, 2000)
+            .easing(TWEEN.Easing.Cubic.In)
+            .start();
+
+        new TWEEN.Tween(this.camera.position)
+            .to({ x: 0, y: 0, z: -2000 }, 2000)
+            .easing(TWEEN.Easing.Exponential.In)
+            .onUpdate(() => this.camera.lookAt(this.scene.position))
+            .start();
+
+        setTimeout(() => {
+            overlay.style.opacity = 1;
+        }, 1500);
+
+        setTimeout(() => {
+            this.dispose();
+            if (onComplete) onComplete();
+            setTimeout(() => {
+                overlay.style.opacity = 0;
+            }, 300);
+        }, 2000);
     }
-    
+
     dispose() {
         if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
-        window.removeEventListener('resize', this.onResize.bind(this));
-        if (this.container && this.renderer) { this.container.removeChild(this.renderer.domElement); this.container.innerHTML = ''; }
-        this.scene = null; this.camera = null; this.renderer = null; this.controls = null;
+        window.removeEventListener('resize', this._onResize);
+        if (this.container && this.renderer) {
+            this.container.removeChild(this.renderer.domElement);
+            this.container.innerHTML = '';
+        }
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.controls = null;
     }
 }
 
@@ -243,8 +355,7 @@ class EvolutionTree {
     init() {
         const container = document.getElementById(this.containerId);
         container.innerHTML = '';
-        
-        // 使用配置文件中的树宽度
+
         const config = getConfig('tree');
         const width = isMobile() ? config.width.mobile : config.width.desktop;
         const viewHeight = window.innerHeight;
@@ -257,7 +368,7 @@ class EvolutionTree {
             .append("svg")
             .attr("width", "100%")
             .attr("height", "100%");
-            
+
         this.svg.on("click", (e) => {
             if (!e.target.closest('.node')) this.clearHighlight();
         });
@@ -289,9 +400,9 @@ class EvolutionTree {
     expandOneLevel() {
         const collapsedNodes = this.root.descendants()
             .filter(d => d._children && d._children.length > 0);
-            
+
         if (collapsedNodes.length === 0) return;
-        
+
         let minHiddenRankVal = 999;
         collapsedNodes.forEach(p => {
             p._children.forEach(child => {
@@ -299,12 +410,12 @@ class EvolutionTree {
                 if (r !== null && r < minHiddenRankVal) minHiddenRankVal = r;
             });
         });
-        
+
         if (minHiddenRankVal === 999) return;
-        
+
         let hasAction = false;
         collapsedNodes.forEach(d => {
-            const hasTargetRankChild = d._children.some(child => 
+            const hasTargetRankChild = d._children.some(child =>
                 this.getNodeRankValue(child) === minHiddenRankVal
             );
             if (hasTargetRankChild) {
@@ -313,16 +424,16 @@ class EvolutionTree {
                 hasAction = true;
             }
         });
-        
+
         if (hasAction) this.update(this.root);
     }
 
     collapseOneLevel() {
         const expandedNodes = this.root.descendants()
             .filter(d => d.children && d.children.length > 0);
-            
+
         if (expandedNodes.length === 0) return;
-        
+
         let maxChildRankVal = -1;
         expandedNodes.forEach(p => {
             p.children.forEach(child => {
@@ -330,12 +441,12 @@ class EvolutionTree {
                 if (r !== null && r > maxChildRankVal) maxChildRankVal = r;
             });
         });
-        
+
         if (maxChildRankVal === -1) return;
-        
+
         let hasAction = false;
         expandedNodes.forEach(d => {
-            const hasTargetRankChild = d.children.some(child => 
+            const hasTargetRankChild = d.children.some(child =>
                 this.getNodeRankValue(child) === maxChildRankVal
             );
             if (hasTargetRankChild) {
@@ -344,7 +455,7 @@ class EvolutionTree {
                 hasAction = true;
             }
         });
-        
+
         if (hasAction) this.update(this.root);
     }
 
@@ -355,7 +466,7 @@ class EvolutionTree {
 
     drawBackground(width) {
         const bgGroup = this.g.append("g").attr("class", "bg-group");
-        
+
         bgGroup.selectAll(".epoch-band")
             .data(this.geologicalEpochs)
             .enter()
@@ -369,7 +480,7 @@ class EvolutionTree {
             .attr("stroke", "none");
 
         this.textGroup = this.g.append("g").attr("class", "text-group");
-        
+
         this.textGroup.selectAll(".epoch-label")
             .data(this.geologicalEpochs)
             .enter()
@@ -382,11 +493,11 @@ class EvolutionTree {
 
     setupZoom(viewHeight, width) {
         const config = getConfig('tree.zoom');
-        const initialScale = isMobile() 
-            ? config.initialScale.mobile 
+        const initialScale = isMobile()
+            ? config.initialScale.mobile
             : config.initialScale.desktop;
-        const initialX = isMobile() 
-            ? config.initialX.mobile 
+        const initialX = isMobile()
+            ? config.initialX.mobile
             : config.initialX.desktop;
 
         this.zoom = d3.zoom()
@@ -394,14 +505,14 @@ class EvolutionTree {
             .translateExtent(config.translateExtent)
             .on("zoom", (e) => {
                 this.g.attr("transform", e.transform);
-                
+
                 const centerY = (viewHeight / 2 - e.transform.y) / e.transform.k;
                 this.g.selectAll(".epoch-label").attr("y", centerY);
-                
+
                 if (!this.isEasterEggActive) {
                     this.currentTransform = e.transform;
                 }
-                
+
                 if (this.axisGroup && this.axis) {
                     const newScale = e.transform.rescaleX(this.timeScale);
                     const tickCount = isMobile() ? 4 : 8;
@@ -415,14 +526,14 @@ class EvolutionTree {
             .call(this.zoom.transform, d3.zoomIdentity
                 .translate(initialX, viewHeight / 2 - 50)
                 .scale(initialScale));
-                
+
         this.currentTransform = d3.zoomIdentity
             .translate(initialX, viewHeight / 2 - 50)
             .scale(initialScale);
-            
+
         // 鼠标移动事件
         this.svg.on("mousemove", (e) => this.updateTimeIndicator(e));
-        
+
         // 移动端触摸事件
         this.svg.on("touchmove", (e) => {
             const touch = e.touches[0];
@@ -432,78 +543,131 @@ class EvolutionTree {
 
     setupTimeAxis() {
         const axisSvg = d3.select("#axis-svg");
-        axisSvg.selectAll("*").remove(); 
-        const isMobile = window.innerWidth < 768;
-        const ticks = isMobile ? [250, 145, 66, 0] : [250, 200, 145, 100, 66, 50, 25, 0];
-        
+        axisSvg.selectAll("*").remove();
+        const mobile = isMobile();
+        const ticks = mobile ? [250, 145, 66, 0] : [250, 200, 145, 100, 66, 50, 25, 0];
+
         this.axis = d3.axisBottom(this.timeScale).tickValues(ticks).tickFormat(d => `${d} MYA`);
         this.axisGroup = axisSvg.append("g").attr("transform", "translate(0, 10)").call(this.axis);
         this.styleAxis();
     }
-    
+
     styleAxis() {
         if (!this.axisGroup) return;
-        this.axisGroup.selectAll("text").style("font-family", "'Playfair Display', serif").style("font-size", "11px").style("fill", "#5d4037");
-        this.axisGroup.selectAll("line, path").style("stroke", "#5d4037");
+        this.axisGroup.selectAll("text")
+            .style("font-family", "'Playfair Display', serif")
+            .style("font-size", "11px")
+            .style("fill", "#5d4037");
+        this.axisGroup.selectAll("line, path")
+            .style("stroke", "#5d4037");
     }
-    
+
     updateTimeIndicator(e) {
         const indicator = document.getElementById('time-indicator');
         if (!this.currentTransform) return;
         const mouseX = e.clientX;
         const mya = this.currentTransform.rescaleX(this.timeScale).invert(mouseX);
         if (mya >= 0 && mya <= 255) {
-            indicator.style.display = 'block'; indicator.style.left = mouseX + 'px'; indicator.textContent = `${mya.toFixed(1)} MYA`;
-        } else { indicator.style.display = 'none'; }
+            indicator.style.display = 'block';
+            indicator.style.left = mouseX + 'px';
+            indicator.textContent = mya.toFixed(1) + ' MYA';
+        } else {
+            indicator.style.display = 'none';
+        }
     }
-    
+
     setupSearch() {
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
-        
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.trim().toLowerCase();
-            if (query.length < 1) { searchResults.style.display = 'none'; return; }
+
+        // 使用防抖优化搜索性能
+        const performSearch = PerformanceUtils.debounce((query) => {
+            if (query.length < 1) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
             const matches = this.allNodes.filter(node => {
                 const cn = (node.data.cn_name || node.data.family_cn || '').toLowerCase();
                 const en = (node.data.en_name || node.data.family_en || '').toLowerCase();
                 return cn.includes(query) || en.includes(query);
             }).slice(0, 10);
-            
+
+            // 使用 DOM API 构建搜索结果，避免 innerHTML XSS 风险
+            searchResults.textContent = '';
+
             if (matches.length > 0) {
-                searchResults.innerHTML = matches.map(node => `<div class="search-result-item" data-node-id="${node.id}"><span class="result-cn">${getLocalizedText(node.data, 'name')}</span><span class="result-en">${node.data.en_name || node.data.family_en}</span></div>`).join('');
-                searchResults.style.display = 'block';
-                searchResults.querySelectorAll('.search-result-item').forEach(item => {
+                matches.forEach(node => {
+                    const item = document.createElement('div');
+                    item.className = 'search-result-item';
+                    item.dataset.nodeId = node.id;
+
+                    const cnSpan = document.createElement('span');
+                    cnSpan.className = 'result-cn';
+                    cnSpan.textContent = getLocalizedText(node.data, 'name');
+
+                    const enSpan = document.createElement('span');
+                    enSpan.className = 'result-en';
+                    enSpan.textContent = node.data.en_name || node.data.family_en;
+
+                    item.appendChild(cnSpan);
+                    item.appendChild(enSpan);
+
                     item.addEventListener('click', (e) => {
-                        e.stopPropagation(); this.focusOnNode(parseInt(item.dataset.nodeId));
-                        searchResults.style.display = 'none'; searchInput.value = '';
+                        e.stopPropagation();
+                        this.focusOnNode(parseInt(item.dataset.nodeId, 10));
+                        searchResults.style.display = 'none';
+                        searchInput.value = '';
                     });
+
+                    searchResults.appendChild(item);
                 });
-            } else { searchResults.innerHTML = '<div class="search-result-item">无匹配结果</div>'; searchResults.style.display = 'block'; }
+                searchResults.style.display = 'block';
+            } else {
+                const noResult = document.createElement('div');
+                noResult.className = 'search-result-item';
+                noResult.textContent = t('noResults');
+                searchResults.appendChild(noResult);
+                searchResults.style.display = 'block';
+            }
+        }, 200);
+
+        searchInput.addEventListener('input', (e) => {
+            performSearch(e.target.value.trim().toLowerCase());
         });
-        document.addEventListener('click', (e) => { if (!e.target.closest('#search-container')) searchResults.style.display = 'none'; });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#search-container')) {
+                searchResults.style.display = 'none';
+            }
+        });
     }
-    
+
     focusOnNode(nodeId) {
         const targetNode = this.allNodes.find(n => n.id === nodeId);
         if (!targetNode) return;
         this.clearHighlight();
         let current = targetNode;
         while (current.parent) {
-            if (current.parent._children) { current.parent.children = current.parent._children; current.parent._children = null; }
+            if (current.parent._children) {
+                current.parent.children = current.parent._children;
+                current.parent._children = null;
+            }
             current = current.parent;
         }
         this.update(this.root);
         setTimeout(() => {
-            this.g.selectAll('.node').filter(d => d.id === nodeId).classed('highlighted', true).raise();
+            this.g.selectAll('.node')
+                .filter(d => d.id === nodeId)
+                .classed('highlighted', true)
+                .raise();
         }, 50);
-        
-        // 适配移动端：聚焦时的缩放比例
-        const isMobile = window.innerWidth < 768;
-        const scale = isMobile ? 1.0 : 1.5;
+
+        const scale = isMobile() ? 1.0 : 1.5;
         const x = -targetNode.y * scale + window.innerWidth / 2;
         const y = -targetNode.x * scale + window.innerHeight / 2;
-        this.svg.transition().duration(750).call(this.zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+        this.svg.transition().duration(750)
+            .call(this.zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
     }
 
     update(source) {
@@ -516,14 +680,13 @@ class EvolutionTree {
             }
         };
         childCount(0, this.root);
-        
+
         // 动态调整树高，防止重叠
         const config = getConfig('tree');
         const newHeight = Math.max(config.minHeight, d3.max(levelWidth) * config.nodeSpacing);
         this.zoom.translateExtent([[-800, -500], [2200, newHeight + 200]]);
         this.svg.call(this.zoom);
 
-        // 使用配置的树宽度
         const treeWidth = isMobile() ? config.width.mobile : config.width.desktop;
         this.treeLayout = d3.cluster().size([newHeight, treeWidth]);
         this.treeLayout(this.root);
@@ -536,7 +699,7 @@ class EvolutionTree {
         const nodes = this.root.descendants();
         const node = this.g.selectAll('g.node')
             .data(nodes, d => d.id || (d.id = ++i));
-        
+
         const nodeEnter = node.enter()
             .append('g')
             .attr('class', 'node')
@@ -547,13 +710,12 @@ class EvolutionTree {
             });
 
         nodeEnter.append('circle')
-            .attr('r', 1e-6)
-            .style("fill", d => d._children ? "#fff" : "");
-            
+            .attr('r', 1e-6);
+
         nodeEnter.append('text')
             .attr("dy", 4)
             .attr("x", d => d.children || d._children ? -10 : 10)
-            .style("text-anchor", d => d.children || d._children ? "end" : "start")
+            .attr("text-anchor", d => d.children || d._children ? "end" : "start")
             .text(d => getLocalizedText(d.data, 'name'))
             .style('fill-opacity', 1e-6)
             .on("click", (e, d) => {
@@ -565,26 +727,27 @@ class EvolutionTree {
             .transition()
             .duration(500)
             .attr("transform", d => `translate(${d.y},${d.x})`);
-            
+
+        // 使用 CSS class 控制样式，不设置内联 fill 样式
         nodeUpdate.select('circle')
             .attr('r', 4.5)
-            .attr('class', d => d._children ? "collapsed" : "")
-            .style("fill", d => d._children ? "#fff" : "");
-            
-        nodeUpdate.select('text').style('fill-opacity', 1);
+            .attr('class', d => d._children ? "collapsed" : "");
+
+        nodeUpdate.select('text')
+            .style('fill-opacity', 1);
 
         const nodeExit = node.exit()
             .transition()
             .duration(500)
             .attr("transform", d => `translate(${source.y},${source.x})`)
             .remove();
-            
+
         nodeExit.select('circle').attr('r', 1e-6);
         nodeExit.select('text').style('fill-opacity', 1e-6);
 
         const link = this.g.selectAll('path.link')
             .data(this.root.links(), d => d.target.id);
-        
+
         const linkEnter = link.enter()
             .insert('path', "g")
             .attr("class", "link")
@@ -611,7 +774,7 @@ class EvolutionTree {
             d.x0 = d.x;
             d.y0 = d.y;
         });
-        
+
         this.allNodes = this.root.descendants();
     }
 
@@ -619,8 +782,8 @@ class EvolutionTree {
         if (isZero || (s.x === d.x && s.y === d.y)) {
             return `M ${s.y} ${s.x} L ${d.y} ${d.x}`;
         }
-        const radius = 12; 
-        const vDist = d.x - s.x; 
+        const radius = 12;
+        const vDist = d.x - s.x;
         if (Math.abs(vDist) < radius * 2) {
             return `M ${s.y} ${s.x} L ${s.y} ${d.x} L ${d.y} ${d.x}`;
         }
@@ -637,7 +800,7 @@ class EvolutionTree {
     clickNode(event, d) {
         if (this.isEasterEggActive) return;
         if (event.target.tagName === 'text') return;
-        
+
         if (d.children) {
             d._children = d.children;
             d.children = null;
@@ -645,7 +808,7 @@ class EvolutionTree {
             d.children = d._children;
             d._children = null;
         }
-        
+
         this.update(d);
     }
 
@@ -663,28 +826,31 @@ class EvolutionTree {
     triggerEasterEgg() {
         if (this.isEasterEggActive) return;
         this.isEasterEggActive = true;
-        
+
         this.savedTransform = this.currentTransform;
 
         const ghostRoot = d3.hierarchy(this.ghostData);
-        const ghostTreeLayout = d3.tree().size([800, 500]); 
+        const ghostTreeLayout = d3.tree().size([800, 500]);
         ghostTreeLayout(ghostRoot);
 
         let targetNode = null;
         ghostRoot.descendants().forEach(d => {
-            d.y = this.timeScale(d.data.time); 
+            d.y = this.timeScale(d.data.time);
             if (d.data.target) targetNode = d;
         });
 
-        const xOffset = this.root.x - targetNode.x; 
+        const xOffset = this.root.x - targetNode.x;
 
         const ghostGroup = this.g.insert("g", ":first-child").attr("class", "ghost-layer");
 
-        ghostGroup.selectAll(".link.ghost").data(ghostRoot.links()).enter().append("path")
+        ghostGroup.selectAll(".link.ghost")
+            .data(ghostRoot.links())
+            .enter()
+            .append("path")
             .attr("class", d => {
                 let isSurvivor = false;
                 let checker = targetNode;
-                while(checker) {
+                while (checker) {
                     if (d.target === checker) { isSurvivor = true; break; }
                     checker = checker.parent;
                 }
@@ -692,43 +858,69 @@ class EvolutionTree {
             })
             .attr("d", d => {
                 const s = { y: d.source.y, x: d.source.x + xOffset };
-                const t = { y: d.target.y, x: d.target.x + xOffset };
-                return `M ${s.y} ${s.x} C ${(s.y + t.y) / 2} ${s.x}, ${(s.y + t.y) / 2} ${t.x}, ${t.y} ${t.x}`;
+                const tgt = { y: d.target.y, x: d.target.x + xOffset };
+                return `M ${s.y} ${s.x} C ${(s.y + tgt.y) / 2} ${s.x}, ${(s.y + tgt.y) / 2} ${tgt.x}, ${tgt.y} ${tgt.x}`;
             })
             .style("opacity", 0)
-            .transition().duration(2000)
+            .transition()
+            .duration(2000)
             .style("opacity", d => {
                 let isSurvivor = false;
                 let checker = targetNode;
-                while(checker) {
+                while (checker) {
                     if (d.target === checker) { isSurvivor = true; break; }
                     checker = checker.parent;
                 }
-                return isSurvivor ? 0.8 : 0.3; 
+                return isSurvivor ? 0.8 : 0.3;
             });
 
-        const gNodes = ghostGroup.selectAll(".node.ghost").data(ghostRoot.descendants()).enter().append("g")
-            .attr("class", "node ghost").attr("transform", d => `translate(${d.y},${d.x + xOffset})`);
+        const gNodes = ghostGroup.selectAll(".node.ghost")
+            .data(ghostRoot.descendants())
+            .enter()
+            .append("g")
+            .attr("class", "node ghost")
+            .attr("transform", d => `translate(${d.y},${d.x + xOffset})`);
 
-        gNodes.append("circle").attr("r", 4).style("opacity", 0).transition().duration(2000).style("opacity", 0.6);
-        gNodes.append("text").attr("dy", -8).attr("text-anchor", "middle")
+        gNodes.append("circle")
+            .attr("r", 4)
+            .style("opacity", 0)
+            .transition()
+            .duration(2000)
+            .style("opacity", 0.6);
+
+        gNodes.append("text")
+            .attr("dy", -8)
+            .attr("text-anchor", "middle")
             .text(d => currentLanguage === 'zh' ? d.data.cn : d.data.name)
-            .style("opacity", 0).transition().duration(2000).style("opacity", 0.8);
+            .style("opacity", 0)
+            .transition()
+            .duration(2000)
+            .style("opacity", 0.8);
 
-        const startX = this.timeScale(360); 
+        const startX = this.timeScale(360);
         const endX = this.timeScale(0);
         const viewWidth = Math.abs(startX - endX);
-        const scale = (window.innerWidth / viewWidth) * 0.85; 
-        
-        const transform = d3.zoomIdentity.translate(window.innerWidth * 0.08 - startX * scale, window.innerHeight / 2).scale(scale);
+        const scale = (window.innerWidth / viewWidth) * 0.85;
 
-        this.svg.transition().duration(3000).ease(d3.easeCubicInOut).call(this.zoom.transform, transform);
+        const transform = d3.zoomIdentity
+            .translate(window.innerWidth * 0.08 - startX * scale, window.innerHeight / 2)
+            .scale(scale);
+
+        this.svg.transition()
+            .duration(3000)
+            .ease(d3.easeCubicInOut)
+            .call(this.zoom.transform, transform);
 
         this.g.selectAll(".node:not(.ghost)")
-            .transition().duration(2000)
+            .transition()
+            .duration(2000)
             .style("opacity", d => d.depth === 0 ? 0 : 0.1);
 
-        this.g.selectAll(".link:not(.ghost)").transition().duration(2000).style("opacity", 0.05);
+        this.g.selectAll(".link:not(.ghost)")
+            .transition()
+            .duration(2000)
+            .style("opacity", 0.05);
+
         document.getElementById('top-controls').style.display = 'none';
         document.getElementById('origin-btn').style.display = 'none';
         document.getElementById('github-link').style.display = 'none';
@@ -738,8 +930,10 @@ class EvolutionTree {
         const mainText = document.querySelector('.ee-text-main');
         const exitBtn = document.getElementById('exit-egg-btn');
 
-        overlay.classList.add('interactive'); 
-        overlay.style.opacity = 1; mainText.style.opacity = 1; mainText.style.transform = 'translateY(0)';
+        overlay.classList.add('interactive');
+        overlay.style.opacity = 1;
+        mainText.style.opacity = 1;
+        mainText.style.transform = 'translateY(0)';
 
         const enterExploreMode = () => {
             mainText.style.opacity = 0;
@@ -749,13 +943,16 @@ class EvolutionTree {
             exitBtn.onclick = () => this.exitEasterEgg();
         };
 
-        this.skipHandler = () => { if(this.textTimer) clearTimeout(this.textTimer); enterExploreMode(); };
+        this.skipHandler = () => {
+            if (this.textTimer) clearTimeout(this.textTimer);
+            enterExploreMode();
+        };
         overlay.addEventListener('click', this.skipHandler, { once: true });
 
         this.textTimer = setTimeout(() => {
             overlay.removeEventListener('click', this.skipHandler);
             enterExploreMode();
-        }, 2000); 
+        }, 2000);
     }
 
     exitEasterEgg() {
@@ -764,14 +961,31 @@ class EvolutionTree {
         const mainText = document.querySelector('.ee-text-main');
 
         exitBtn.classList.remove('visible');
-        setTimeout(() => { mainText.style.transform = 'translateY(20px)'; }, 500);
+        setTimeout(() => {
+            mainText.style.transform = 'translateY(20px)';
+        }, 500);
 
-        this.g.selectAll(".ghost-layer").transition().duration(1000).style("opacity", 0).remove();
-        this.g.selectAll(".node:not(.ghost)").transition().duration(1000).style("opacity", 1);
-        this.g.selectAll(".link:not(.ghost)").transition().duration(1000).style("opacity", 1);
+        this.g.selectAll(".ghost-layer")
+            .transition()
+            .duration(1000)
+            .style("opacity", 0)
+            .remove();
+
+        this.g.selectAll(".node:not(.ghost)")
+            .transition()
+            .duration(1000)
+            .style("opacity", 1);
+
+        this.g.selectAll(".link:not(.ghost)")
+            .transition()
+            .duration(1000)
+            .style("opacity", 1);
 
         if (this.savedTransform) {
-            this.svg.transition().duration(1500).ease(d3.easeCubicOut).call(this.zoom.transform, this.savedTransform);
+            this.svg.transition()
+                .duration(1500)
+                .ease(d3.easeCubicOut)
+                .call(this.zoom.transform, this.savedTransform);
         }
 
         setTimeout(() => {
@@ -801,55 +1015,87 @@ class AppManager {
             topControls: document.getElementById('top-controls'),
             paperTexture: document.getElementById('paper-texture')
         };
-        this.particleBg = null; this.helixApp = null; this.treeApp = null; this.rawData = null;
+        this.particleBg = null;
+        this.helixApp = null;
+        this.treeApp = null;
+        this.rawData = null;
     }
 
     start() {
+        // 尽早启动图片数据异步加载（7.9MB 不阻塞首屏）
+        loadImageData();
+
         window.onload = () => {
             if (typeof mammalsData === 'undefined') {
                 alert("错误：未找到 mammalsData，请确保 data.js 已正确加载。");
                 return;
             }
-            
+
             this.rawData = mammalsData;
-            
+
             // 初始化语言
             updateUILanguage();
-            
+
             // 移动端减少纹理渲染以提升性能
-            if (!isMobile()) {
+            if (!isMobile() && this.ui.paperTexture) {
                 const textureUrl = DOMUtils.generatePaperTexture();
                 this.ui.paperTexture.style.backgroundImage = `url(${textureUrl})`;
             }
-            
+
             this.particleBg = new ParticleBackground('container-particles');
             this.init3DScene();
-            
-            this.ui.loading.style.opacity = 0;
-            setTimeout(() => this.ui.loading.style.display = 'none', 500);
+
+            if (this.ui.loading) {
+                this.ui.loading.style.opacity = 0;
+                setTimeout(() => this.ui.loading.style.display = 'none', 500);
+            }
         };
-        
-        this.ui.enterBtn.addEventListener('click', () => this.transitionToTree());
-        
+
+        if (this.ui.enterBtn) {
+            this.ui.enterBtn.addEventListener('click', () => this.transitionToTree());
+        }
+
         // 绑定资料模态框事件
-        this.ui.modalClose.addEventListener('click', () => this.closeModal(this.ui.modal));
-        this.ui.modal.addEventListener('click', (e) => {
-            if (e.target === this.ui.modal) this.closeModal(this.ui.modal);
-        });
+        if (this.ui.modalClose) {
+            this.ui.modalClose.addEventListener('click', () => this.closeModal(this.ui.modal));
+        }
+        if (this.ui.modal) {
+            this.ui.modal.addEventListener('click', (e) => {
+                if (e.target === this.ui.modal) this.closeModal(this.ui.modal);
+            });
+        }
 
         // 绑定信息模态框事件
-        this.ui.infoBtn.addEventListener('click', () => {
-            this.ui.infoModal.style.display = 'flex';
+        if (this.ui.infoBtn) {
+            this.ui.infoBtn.addEventListener('click', () => {
+                if (this.ui.infoModal) this.ui.infoModal.style.display = 'flex';
+            });
+        }
+        if (this.ui.infoClose) {
+            this.ui.infoClose.addEventListener('click', () => this.closeModal(this.ui.infoModal));
+        }
+        if (this.ui.infoModal) {
+            this.ui.infoModal.addEventListener('click', (e) => {
+                if (e.target === this.ui.infoModal) this.closeModal(this.ui.infoModal);
+            });
+        }
+
+        // ESC 键关闭模态框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (this.ui.modal && this.ui.modal.style.display !== 'none') {
+                    this.closeModal(this.ui.modal);
+                }
+                if (this.ui.infoModal && this.ui.infoModal.style.display !== 'none') {
+                    this.closeModal(this.ui.infoModal);
+                }
+            }
         });
-        this.ui.infoClose.addEventListener('click', () => this.closeModal(this.ui.infoModal));
-        this.ui.infoModal.addEventListener('click', (e) => {
-            if (e.target === this.ui.infoModal) this.closeModal(this.ui.infoModal);
-        });
-        
+
         // 添加语言切换按钮事件
         this.setupLanguageSwitch();
     }
-    
+
     setupLanguageSwitch() {
         const langBtn = document.getElementById('lang-switch');
         if (langBtn) {
@@ -857,13 +1103,13 @@ class AppManager {
                 const newLang = currentLanguage === 'zh' ? 'en' : 'zh';
                 switchLanguage(newLang);
                 langBtn.textContent = newLang === 'zh' ? 'EN' : '中';
-                
+
                 // 更新演化树节点文本
                 if (this.treeApp && this.treeApp.g) {
                     this.treeApp.g.selectAll('.node text')
                         .text(d => getLocalizedText(d.data, 'name'));
                 }
-                
+
                 // 更新地质年代标签
                 if (this.treeApp && this.treeApp.textGroup) {
                     this.treeApp.textGroup.selectAll(".epoch-label")
@@ -893,27 +1139,27 @@ class AppManager {
     }
 
     transitionToTree() {
-        this.ui.introLayer.style.opacity = 0;
-        
+        if (this.ui.introLayer) this.ui.introLayer.style.opacity = 0;
+
         if (this.particleBg) this.particleBg.fadeOut(1500);
-        
+
         this.helixApp.zoomInAndEnd(() => {
-            this.ui.introLayer.style.display = 'none';
+            if (this.ui.introLayer) this.ui.introLayer.style.display = 'none';
             document.body.style.backgroundColor = 'var(--bg-color)';
             document.body.style.color = 'var(--text-color)';
-            
+
             if (this.particleBg) {
                 setTimeout(() => this.particleBg.dispose(), 500);
             }
-            
-            this.ui.vizContainer.style.display = 'block';
-            this.ui.timeAxis.style.display = 'flex';
-            this.ui.topControls.style.display = 'flex';
-            
-            if (!isMobile()) {
+
+            if (this.ui.vizContainer) this.ui.vizContainer.style.display = 'block';
+            if (this.ui.timeAxis) this.ui.timeAxis.style.display = 'flex';
+            if (this.ui.topControls) this.ui.topControls.style.display = 'flex';
+
+            if (!isMobile() && this.ui.paperTexture) {
                 this.ui.paperTexture.style.display = 'block';
             }
-            
+
             this.treeApp = new EvolutionTree('container-viz', this.rawData, (data) => this.showModal(data));
             this.treeApp.init();
         });
@@ -927,36 +1173,45 @@ class AppManager {
             img: document.getElementById('modal-img'),
             tags: document.getElementById('modal-tags')
         };
-        
-        els.cn.innerText = getLocalizedText(data, 'name');
-        els.en.innerText = data.en_name || data.family_en || "";
-        els.desc.innerText = getLocalizedText(data, 'description');
-        els.tags.innerHTML = "";
-        
-        if (data.taxonomy) {
-            Object.entries(data.taxonomy).forEach(([rank, name]) => {
-                els.tags.innerHTML += `<span class="info-tag">${rank}: ${name}</span>`;
-            });
-        }
-        
-        const familyEn = data.family_en || data.en_name;
-        const imgBase64 = IMG_DATA[familyEn];
 
-        if (imgBase64) {
-            els.img.style.display = "block";
-            els.img.src = imgBase64;
-            els.img.onerror = () => {
-                els.img.style.display = 'none';
-            };
-        } else {
-            els.img.style.display = "none";
+        if (els.cn) els.cn.textContent = getLocalizedText(data, 'name');
+        if (els.en) els.en.textContent = data.en_name || data.family_en || "";
+        if (els.desc) els.desc.textContent = getLocalizedText(data, 'description');
+
+        // 使用 DOM API 构建标签，避免 innerHTML XSS 风险
+        if (els.tags) {
+            els.tags.textContent = '';
+            if (data.taxonomy) {
+                Object.entries(data.taxonomy).forEach(([rank, name]) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'info-tag';
+                    tag.textContent = rank + ': ' + name;
+                    els.tags.appendChild(tag);
+                });
+            }
         }
-        
-        this.ui.modal.style.display = 'flex';
+
+        const familyEn = data.family_en || data.en_name;
+        const imgBase64 = getImage(familyEn);
+
+        if (els.img) {
+            if (imgBase64) {
+                els.img.style.display = "block";
+                els.img.src = imgBase64;
+                els.img.alt = getLocalizedText(data, 'name');
+                els.img.onerror = () => {
+                    els.img.style.display = 'none';
+                };
+            } else {
+                els.img.style.display = "none";
+            }
+        }
+
+        if (this.ui.modal) this.ui.modal.style.display = 'flex';
     }
 
     closeModal(modalElement) {
-        modalElement.style.display = 'none';
+        if (modalElement) modalElement.style.display = 'none';
     }
 }
 
