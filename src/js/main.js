@@ -350,15 +350,18 @@ class EvolutionTree {
         this.axis = null;
         this.geologicalEpochs = getConfig('geologicalEpochs');
         this.isEasterEggActive = false;
+        this.axisWidth = 0;
+        this.viewHeight = window.innerHeight;
+
+        this._onResize = PerformanceUtils.debounce(() => this.handleResize(), 120);
     }
 
     init() {
         const container = document.getElementById(this.containerId);
         container.innerHTML = '';
 
-        const config = getConfig('tree');
-        const width = isMobile() ? config.width.mobile : config.width.desktop;
-        const viewHeight = window.innerHeight;
+        this.axisWidth = this.getTimelineWidth();
+        this.viewHeight = window.innerHeight;
 
         this.root = DataUtils.buildHierarchy(this.rawData);
         this.root.x0 = 0;
@@ -374,18 +377,21 @@ class EvolutionTree {
         });
 
         this.g = this.svg.append("g").attr("class", "tree-layer");
-        this.timeScale = d3.scaleLinear().domain([255, 0]).range([0, width]);
+        this.timeScale = d3.scaleLinear().domain([255, 0]).range([0, this.axisWidth]);
 
-        this.drawBackground(width);
+        this.drawBackground();
         this.setupTimeAxis();
-        this.setupZoom(viewHeight, width);
+        this.setupZoom();
         this.setupSearch();
         this.setupTreeControls();
 
-        this.treeLayout = d3.cluster().size([viewHeight, width]);
-        this.update(this.root);
+        this.treeLayout = d3.cluster().size([this.viewHeight, this.axisWidth]);
+        this.update(this.root, { animate: false });
         this.allNodes = this.root.descendants();
         this.initEasterEgg();
+
+        window.removeEventListener('resize', this._onResize);
+        window.addEventListener('resize', this._onResize);
     }
 
     setupTreeControls() {
@@ -464,7 +470,18 @@ class EvolutionTree {
         document.getElementById('search-results').style.display = 'none';
     }
 
-    drawBackground(width) {
+    getTimelineWidth() {
+        const axisSvg = document.getElementById('axis-svg');
+        const axisWidth = axisSvg?.getBoundingClientRect().width || axisSvg?.clientWidth || 0;
+
+        if (axisWidth > 0) return axisWidth;
+
+        const container = document.getElementById(this.containerId);
+        return container?.getBoundingClientRect().width || container?.clientWidth || window.innerWidth;
+    }
+
+    drawBackground() {
+        this.g.selectAll(".bg-group, .text-group").remove();
         const bgGroup = this.g.append("g").attr("class", "bg-group");
 
         bgGroup.selectAll(".epoch-band")
@@ -491,7 +508,7 @@ class EvolutionTree {
             .text(d => d.name[currentLanguage]);
     }
 
-    setupZoom(viewHeight, width) {
+    setupZoom() {
         const config = getConfig('tree.zoom');
         const initialScale = isMobile()
             ? config.initialScale.mobile
@@ -499,14 +516,15 @@ class EvolutionTree {
         const initialX = isMobile()
             ? config.initialX.mobile
             : config.initialX.desktop;
+        const [[minX, minY], [, maxY]] = config.translateExtent;
 
         this.zoom = d3.zoom()
             .scaleExtent(config.scaleExtent)
-            .translateExtent(config.translateExtent)
+            .translateExtent([[minX, minY], [this.axisWidth + 500, maxY]])
             .on("zoom", (e) => {
                 this.g.attr("transform", e.transform);
 
-                const centerY = (viewHeight / 2 - e.transform.y) / e.transform.k;
+                const centerY = (this.viewHeight / 2 - e.transform.y) / e.transform.k;
                 this.g.selectAll(".epoch-label").attr("y", centerY);
 
                 if (!this.isEasterEggActive) {
@@ -524,11 +542,11 @@ class EvolutionTree {
 
         this.svg.call(this.zoom)
             .call(this.zoom.transform, d3.zoomIdentity
-                .translate(initialX, viewHeight / 2 - 50)
+                .translate(initialX, this.viewHeight / 2 - 50)
                 .scale(initialScale));
 
         this.currentTransform = d3.zoomIdentity
-            .translate(initialX, viewHeight / 2 - 50)
+            .translate(initialX, this.viewHeight / 2 - 50)
             .scale(initialScale);
 
         // 鼠标移动事件
@@ -539,6 +557,37 @@ class EvolutionTree {
             const touch = e.touches[0];
             this.updateTimeIndicator({ clientX: touch.clientX });
         });
+    }
+
+    handleResize() {
+        if (!this.svg || !this.root || !this.zoom || !this.timeScale) return;
+
+        const previousScale = this.timeScale.copy();
+        const previousTransform = this.currentTransform || d3.zoomIdentity;
+        const visibleDomain = previousTransform.rescaleX(previousScale).domain();
+        const newAxisWidth = this.getTimelineWidth();
+
+        if (!newAxisWidth) return;
+
+        this.axisWidth = newAxisWidth;
+        this.viewHeight = window.innerHeight;
+        this.timeScale.range([0, this.axisWidth]);
+        this.treeLayout = d3.cluster().size([this.viewHeight, this.axisWidth]);
+
+        this.drawBackground();
+        this.setupTimeAxis();
+        this.update(this.root, { animate: false });
+
+        const worldStart = this.timeScale(visibleDomain[0]);
+        const worldEnd = this.timeScale(visibleDomain[1]);
+        const worldSpan = Math.abs(worldEnd - worldStart) || 1;
+        const nextScale = this.axisWidth / worldSpan;
+        const nextX = -nextScale * Math.min(worldStart, worldEnd);
+        const nextTransform = d3.zoomIdentity
+            .translate(nextX, previousTransform.y)
+            .scale(nextScale);
+
+        this.svg.call(this.zoom.transform, nextTransform);
     }
 
     setupTimeAxis() {
@@ -670,7 +719,8 @@ class EvolutionTree {
             .call(this.zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
     }
 
-    update(source) {
+    update(source, options = {}) {
+        const duration = options.animate === false ? 0 : 500;
         let levelWidth = [1];
         const childCount = (level, n) => {
             if (n.children && n.children.length > 0) {
@@ -684,11 +734,10 @@ class EvolutionTree {
         // 动态调整树高，防止重叠
         const config = getConfig('tree');
         const newHeight = Math.max(config.minHeight, d3.max(levelWidth) * config.nodeSpacing);
-        this.zoom.translateExtent([[-800, -500], [2200, newHeight + 200]]);
+        this.zoom.translateExtent([[-800, -500], [this.axisWidth + 200, newHeight + 200]]);
         this.svg.call(this.zoom);
 
-        const treeWidth = isMobile() ? config.width.mobile : config.width.desktop;
-        this.treeLayout = d3.cluster().size([newHeight, treeWidth]);
+        this.treeLayout = d3.cluster().size([newHeight, this.axisWidth]);
         this.treeLayout(this.root);
 
         this.root.descendants().forEach(d => {
@@ -725,7 +774,7 @@ class EvolutionTree {
 
         const nodeUpdate = node.merge(nodeEnter)
             .transition()
-            .duration(500)
+            .duration(duration)
             .attr("transform", d => `translate(${d.y},${d.x})`);
 
         // 使用 CSS class 控制样式，不设置内联 fill 样式
@@ -738,7 +787,7 @@ class EvolutionTree {
 
         const nodeExit = node.exit()
             .transition()
-            .duration(500)
+            .duration(duration)
             .attr("transform", d => `translate(${source.y},${source.x})`)
             .remove();
 
@@ -758,12 +807,12 @@ class EvolutionTree {
 
         link.merge(linkEnter)
             .transition()
-            .duration(500)
+            .duration(duration)
             .attr('d', d => this.diagonal(d.source, d.target));
 
         link.exit()
             .transition()
-            .duration(500)
+            .duration(duration)
             .attr('d', d => {
                 const o = { x: source.x, y: source.y };
                 return this.diagonal(o, o, true);
