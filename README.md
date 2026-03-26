@@ -36,6 +36,12 @@
 
 > **🌟 亮点：** 本项目不仅包含科学数据，还隐藏了一个关于"祖先"的彩蛋模式，等待你去发现。
 
+## 🧭 相关推荐 (Related Project)
+
+如果你想沿着另一条羊膜动物主线继续探索，也可以查看姊妹项目 **DeepTime Sauropsida**：它聚焦鸟类、鳄类、龟鳖类、喙头类与有鳞类，把现生蜥形纲重新放回约 3 亿年的深时背景中。
+
+👉 GitHub：<https://github.com/SeanWong17/Sauropsida-tree>
+
 ## ✨ 核心特性 (Features)
 
 ### 🌌 沉浸式 3D 序幕

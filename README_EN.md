@@ -38,6 +38,12 @@ Based on the latest **Mammal Diversity Database (MDD) v2.3**, it presents the co
 
 > **🌟 Highlight:** This project contains not only scientific data but also a hidden "Easter Egg" mode about our ancestors, waiting for you to discover.
 
+## 🧭 Related Project
+
+If you want to continue along the other major amniote branch, take a look at the sister project **DeepTime Sauropsida**. It focuses on birds, crocodilians, turtles, tuataras, and squamates, placing living sauropsids back into roughly 300 million years of deep-time context.
+
+👉 GitHub: <https://github.com/SeanWong17/Sauropsida-tree>
+
 ## ✨ Features
 
 ### 🌌 Immersive 3D Prologue
