@@ -18,3 +18,6 @@ package-lock.json
 *.log
 *.tmp
 .tmp_*
+
+/images
+/tools
