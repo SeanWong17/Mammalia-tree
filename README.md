@@ -80,25 +80,26 @@
 
 ## 🛠️ 技术栈 (Tech Stack)
 
-本项目采用 **Vanilla JavaScript (ES6+)** 开发，无复杂构建工具依赖，保持代码的纯粹与轻量。
+本项目采用 **Vanilla JavaScript (ES6+)** 开发，运行时无需构建步骤；第三方依赖固定版本并随项目自托管。
 
 * **Core**: HTML5, CSS3, JavaScript
 * **Visualization**: [D3.js](https://d3js.org/) (v7) - 处理复杂的树状数据结构与布局计算。
 * **3D Engine**: [Three.js](https://threejs.org/) (r128) - 处理 WebGL 粒子背景与 CSS3D 变换。
 * **Animation**: [Tween.js](https://github.com/tweenjs/tween.js/) - 处理平滑的补间动画。
-* **Fonts**: Noto Serif SC & Playfair Display (via Google Fonts)。
+* **Fonts**: 自托管、unicode-range 分片的 Noto Serif SC，无外部字体请求。
 
 ## 📂 目录结构 (Structure)
 
-项目采用模块化设计，便于维护和扩展。所有数据与图像资源均已通过 JS 变量预加载，**无需后端环境**。
+项目采用模块化设计，便于维护和扩展。图片按需加载为独立、内容哈希命名的 WebP，**无需后端环境**。
 
 ```text
 Mammalia-tree-main/
 ├── assets/                  # 静态资源
+│   ├── images/             # 167 张按需加载的 WebP
 │   └── logo.png            # 项目 Logo
 ├── data/                    # 数据文件
 │   ├── data.js             # 演化树拓扑数据 (JSON Object)
-│   └── images_data.js      # 图像资源 (Base64 encoded)
+│   └── images_manifest.js  # 图片内容哈希清单
 ├── examples/                # 演示截图
 ├── src/                     # 源代码
 │   ├── css/
@@ -108,16 +109,21 @@ Mammalia-tree-main/
 │       ├── i18n.js         # 国际化配置（中英文）
 │       ├── utils.js        # 工具函数库
 │       ├── easter_egg_data.js  # 彩蛋数据
-│       └── main.js         # 核心逻辑 (Three.js + D3.js)
+│       ├── gallery.js      # WebGL 与 CSS3D 画廊
+│       ├── tree.js         # D3 演化树
+│       └── app.js          # 生命周期与 UI 控制器
+├── scripts/                 # 数据校验、依赖同步和开发服务器
+├── tests/                   # Node.js 与 Playwright 回归测试
+├── vendor/                  # 固定版本的浏览器运行时依赖
 ├── index.html               # 入口文件
-├── requirements.txt         # Python 依赖（翻译脚本）
+├── package.json             # 开发与测试命令
 ├── README.md                # 中文说明
 └── README_EN.md             # English Documentation
 ```
 
 ## 🚀 本地运行 (How to Run)
 
-得益于零依赖和数据内嵌的设计，本项目具有极佳的便携性：
+运行资源均为本地静态文件，项目可直接预览，也可使用内置开发服务器：
 
 ### 方式一：直接打开（推荐用于快速预览）
 1.  **下载**：Clone 或下载本项目压缩包。
@@ -125,17 +131,13 @@ Mammalia-tree-main/
 3.  **注意**：无需安装 Node.js，无需配置本地服务器，开箱即用。
 
 ### 方式二：本地服务器（推荐用于开发）
-为避免某些浏览器的 CORS 限制，建议使用本地服务器：
 
 ```bash
-# 使用 Python 3
-python -m http.server 8000
-
-# 或使用 Node.js (需先安装 http-server)
-npx http-server -p 8000
+npm install
+npm start
 ```
 
-然后访问 `http://localhost:8000`
+然后访问 `http://127.0.0.1:4173`。提交前可运行 `npm run check` 与 `npm run test:browser`。
 
 ## 🔧 自定义配置 (Customization)
 
@@ -173,7 +175,7 @@ tree: {
 
 ## 📄 开源协议 (License)
 
-本作品采用 [知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议 (CC BY-NC-SA 4.0)](http://creativecommons.org/licenses/by-nc-sa/4.0/) 进行许可。
+本作品采用 [知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议 (CC BY-NC-SA 4.0)](LICENSE) 进行许可。
 
 * ✅ 你可以自由地分享、修改本项目。
 * ❌ 不可用于商业用途。

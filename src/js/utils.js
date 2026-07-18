@@ -8,57 +8,79 @@ const DataUtils = {
      * 清理时间数据
      */
     sanitizeTime(val) {
-        return (!val) ? 0 : +val;
+        if (val === null || val === undefined || val === '') return 0;
+        const time = Number(val);
+        if (!Number.isFinite(time) || time < 0) {
+            throw new TypeError(`Invalid divergence time: ${val}`);
+        }
+        return time;
     },
     
     /**
      * 构建层级数据
      */
     buildHierarchy(data) {
-        const map = {};
+        if (!data || (!data.clades && !data.families)) {
+            throw new TypeError('Mammal hierarchy data is missing');
+        }
+
+        const map = new Map();
+        const addNode = (key, node) => {
+            if (!key) throw new Error('Hierarchy node is missing a key');
+            if (map.has(key)) throw new Error(`Duplicate hierarchy key: ${key}`);
+            map.set(key, node);
+        };
         
         // 处理分支节点
         if (data.clades) {
             Object.keys(data.clades).forEach(key => {
                 const rawNode = data.clades[key];
-                map[key] = {
+                addNode(key, {
                     ...rawNode,
-                    en_name: key,
+                    taxon_key: key,
+                    scientific_name: key,
+                    en_name: rawNode.en_name || key,
                     divergence_time_mya: this.sanitizeTime(rawNode.divergence_time_mya),
                     children: []
-                };
+                });
             });
         }
         
         // 处理科级节点
         if (data.families) {
             data.families.forEach(fam => {
-                map[fam.family_en] = {
+                addNode(fam.family_en, {
                     ...fam,
                     children: [],
                     cn_name: fam.family_cn,
                     en_name: fam.family_en,
+                    taxon_key: fam.family_en,
+                    scientific_name: fam.family_en,
                     divergence_time_mya: this.sanitizeTime(fam.divergence_time_mya)
-                };
+                });
             });
         }
         
         // 建立父子关系
-        let root = null;
-        Object.values(map).forEach(node => {
+        const roots = [];
+        map.forEach(node => {
             const parentKey = node.parent || node.parent_clade;
-            if (parentKey && map[parentKey]) {
-                map[parentKey].children.push(node);
+            if (parentKey) {
+                const parent = map.get(parentKey);
+                if (!parent) {
+                    throw new Error(`Missing parent '${parentKey}' for '${node.taxon_key}'`);
+                }
+                parent.children.push(node);
             } else if (!parentKey) {
-                root = node;
+                roots.push(node);
             }
         });
-        
-        if (!root && Object.keys(map).length > 0) {
-            root = map[Object.keys(map)[0]];
+
+        if (roots.length !== 1) {
+            throw new Error(`Expected one hierarchy root, found ${roots.length}`);
         }
-        
-        return d3.hierarchy(root);
+
+        return d3.hierarchy(roots[0]);
     },
     
     /**
@@ -114,8 +136,10 @@ const DOMUtils = {
      * 创建卡片元素（使用 DOM API 避免 XSS）
      */
     createCardElement(item, imgBase64) {
-        const element = document.createElement('div');
+        const element = document.createElement('button');
+        element.type = 'button';
         element.className = item.isHero ? 'card-element hero' : 'card-element';
+        element.setAttribute('aria-label', `${t('openDetails')}: ${getLocalizedText(item, 'name')}`);
 
         const content = document.createElement('div');
         content.className = 'card-content';
@@ -123,6 +147,8 @@ const DOMUtils = {
         const img = document.createElement('img');
         img.className = 'card-img';
         img.loading = 'lazy';
+        img.decoding = 'async';
+        img.alt = getLocalizedText(item, 'name');
         if (imgBase64) {
             img.src = imgBase64;
         }
@@ -159,14 +185,20 @@ const PerformanceUtils = {
      */
     debounce(func, wait) {
         let timeout;
-        return function executedFunction(...args) {
+        function executedFunction(...args) {
+            const context = this;
             const later = () => {
-                clearTimeout(timeout);
-                func(...args);
+                timeout = null;
+                func.apply(context, args);
             };
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
+        }
+        executedFunction.cancel = () => {
+            clearTimeout(timeout);
+            timeout = null;
         };
+        return executedFunction;
     },
     
     /**

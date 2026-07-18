@@ -12,7 +12,9 @@ Desktop.ini
 
 # Node (if ever added)
 node_modules/
-package-lock.json
+.codegraph/
+playwright-report/
+test-results/
 
 # Misc
 *.log

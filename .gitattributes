@@ -1,2 +1,8 @@
 data/data.js linguist-vendored
-data/images_data.js linguist-vendored
+data/images_manifest.js linguist-generated
+vendor/** linguist-vendored
+assets/images/** linguist-vendored
+assets/images/*.webp binary
+assets/fonts/** linguist-vendored
+assets/fonts/**/*.woff2 binary
+src/css/noto-serif-sc.css linguist-generated

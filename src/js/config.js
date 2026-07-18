@@ -77,6 +77,14 @@ function isMobile() {
 }
 
 /**
+ * Respect the user's operating-system motion preference.
+ * @returns {boolean}
+ */
+function prefersReducedMotion() {
+    return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+}
+
+/**
  * 工具函数：获取配置值
  * @param {string} path - 配置路径（用点号分隔）
  * @returns {*} 配置值

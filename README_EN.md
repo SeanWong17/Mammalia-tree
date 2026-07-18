@@ -82,25 +82,26 @@ If you want to continue along the other major amniote branch, take a look at the
 
 ## 🛠️ Tech Stack
 
-This project is built with **Vanilla JavaScript (ES6+)** with no complex build tool dependencies, keeping the code pure and lightweight.
+This project uses **Vanilla JavaScript (ES6+)** with no runtime build step. Third-party browser dependencies are version-locked and self-hosted.
 
 * **Core**: HTML5, CSS3, JavaScript
 * **Visualization**: [D3.js](https://d3js.org/) (v7) - Handles complex tree data structures and layout calculations.
 * **3D Engine**: [Three.js](https://threejs.org/) (r128) - Handles WebGL particle backgrounds and CSS3D transformations.
 * **Animation**: [Tween.js](https://github.com/tweenjs/tween.js/) - Handles smooth interpolation animations.
-* **Fonts**: Noto Serif SC & Playfair Display (via Google Fonts).
+* **Fonts**: Self-hosted, unicode-range-split Noto Serif SC with no external font requests.
 
 ## 📂 Structure
 
-The project adopts a modular design for easy maintenance and extension. All data and image resources are preloaded via JS variables, requiring **no backend environment**.
+The project adopts a modular design for easy maintenance and extension. Images are independent, content-hashed WebP assets loaded on demand, requiring **no backend environment**.
 
 ```text
 Mammalia-tree-main/
 ├── assets/                  # Static assets
+│   ├── images/             # 167 on-demand WebP images
 │   └── logo.png            # Project Logo
 ├── data/                    # Data files
 │   ├── data.js             # Phylogenetic topology data (JSON Object)
-│   └── images_data.js      # Image resources (Base64 encoded)
+│   └── images_manifest.js  # Content-hashed image manifest
 ├── examples/                # Screenshots for README
 ├── src/                     # Source code
 │   ├── css/
@@ -110,16 +111,21 @@ Mammalia-tree-main/
 │       ├── i18n.js         # Internationalization (Chinese/English)
 │       ├── utils.js        # Utility functions
 │       ├── easter_egg_data.js  # Easter egg data
-│       └── main.js         # Core logic (Three.js + D3.js)
+│       ├── gallery.js      # WebGL and CSS3D gallery
+│       ├── tree.js         # D3 evolution tree
+│       └── app.js          # Lifecycle and UI controller
+├── scripts/                 # Validation, vendoring, and dev server
+├── tests/                   # Node.js and Playwright regression tests
+├── vendor/                  # Version-locked browser dependencies
 ├── index.html               # Entry point
-├── requirements.txt         # Python dependencies (translation script)
+├── package.json             # Development and test commands
 ├── README.md                # Chinese Documentation
 └── README_EN.md             # English Documentation
 ```
 
 ## 🚀 How to Run
 
-Thanks to its zero-dependency and embedded data design, this project is extremely portable:
+All runtime resources are local static files, so the project supports both direct preview and an included development server:
 
 ### Method 1: Direct Open (Recommended for Quick Preview)
 1.  **Download**: Clone or download the repository.
@@ -127,17 +133,13 @@ Thanks to its zero-dependency and embedded data design, this project is extremel
 3.  **Note**: No Node.js installation required, no local server configuration needed.
 
 ### Method 2: Local Server (Recommended for Development)
-To avoid potential CORS restrictions in some browsers, it's recommended to use a local server:
 
 ```bash
-# Using Python 3
-python -m http.server 8000
-
-# Or using Node.js (requires http-server)
-npx http-server -p 8000
+npm install
+npm start
 ```
 
-Then visit `http://localhost:8000`
+Then visit `http://127.0.0.1:4173`. Before committing, run `npm run check` and `npm run test:browser`.
 
 ## 🔧 Customization
 
@@ -175,7 +177,7 @@ The birth of this project relied on collaboration between the open-source commun
 
 ## 📄 License
 
-This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](http://creativecommons.org/licenses/by-nc-sa/4.0/).
+This work is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](LICENSE).
 
 * ✅ You are free to share and adapt this project.
 * ❌ Commercial use is prohibited.
