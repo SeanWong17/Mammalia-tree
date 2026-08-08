@@ -30,6 +30,8 @@
 
 ---
 
+> **🌍 Full Chordate Atlas:** Continue from mammals into fishes, amphibians, sauropsids, and birds in [DeepTime Chordata](https://github.com/SeanWong17/Chordata-atlas).
+
 ## 📖 Introduction
 
 **DeepTime Mammalia** is an interactive data visualization project running in modern browsers. Unlike dry textbook charts, this project leverages WebGL and CSS3D technologies to reconstruct our perception of "Deep Time" and evolution.

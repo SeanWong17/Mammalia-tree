@@ -28,6 +28,8 @@
 
 ---
 
+> **🌍 完整脊索动物图谱：** 想从哺乳纲继续探索鱼类、两栖类、蜥形类与鸟类，请进入 [DeepTime Chordata](https://github.com/SeanWong17/Chordata-atlas)。
+
 ## 📖 简介 (Introduction)
 
 **DeepTime Mammalia** 是一个运行于现代浏览器端的交互式数据可视化作品。不同于枯燥的教科书图表，本项目利用 WebGL 和 CSS3D 技术，试图重构我们对"演化时间"的感知。
